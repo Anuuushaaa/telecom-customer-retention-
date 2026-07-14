@@ -197,5 +197,46 @@ encoding of `Contract`, no data leakage in the scaler, exclusion of
 `customerID` from features, and absence of NaNs.
 
 ## Status
-🚧 In progress — Phase 4 (Feature Engineering & Preprocessing) complete.
+## Model Training & Evaluation (Phase 5)
+
+Two models trained on identical preprocessed data (`src/train.py`), both
+using loss-reweighting (not oversampling) to handle the 73/26 class
+imbalance — `class_weight='balanced'` for Logistic Regression,
+`scale_pos_weight` for XGBoost — so no synthetic data was introduced.
+
+**Why accuracy alone isn't the metric:** a model predicting "No Churn" for
+every customer would score ~73% accuracy while catching zero churners.
+Recall on the churn class is the primary metric, since the business cost of
+missing a churner is higher than the cost of an unnecessary retention offer
+(false positive).
+
+**Initial default-threshold (0.5) results:**
+
+| Model | Accuracy | Precision | Recall | F1 | ROC-AUC |
+|---|---|---|---|---|---|
+| Logistic Regression | 0.7388 | 0.5052 | 0.7861 | 0.6151 | 0.8419 |
+| XGBoost | 0.7580 | 0.5358 | 0.6604 | 0.5916 | 0.8235 |
+
+At the default threshold, XGBoost appeared weaker on recall — but this
+turned out to be a threshold artifact, not a genuine model gap.
+
+**Threshold tuning:** since 0.5 is an arbitrary cutoff not derived from this
+problem's priorities, both models were swept across thresholds 0.20–0.50.
+At matched recall (~0.80–0.83), XGBoost's precision was comparable to or
+better than Logistic Regression's — the earlier "XGBoost is worse" reading
+was an artifact of comparing both models at an unexamined default threshold,
+not a real performance gap.
+
+**Final choice: Logistic Regression @ threshold 0.35** (recall 0.9037,
+precision 0.4471, F1 0.5982), locked in `src/config.py`. Chosen over XGBoost
+despite XGBoost's slightly better precision at matched recall, because this
+project's core value proposition is explainability — Logistic Regression's
+coefficients are directly interpretable, which pairs better with the SHAP
+analysis in Phase 6 than a boosted tree ensemble would.
+
+Trained models and preprocessing artifacts are saved to `models/`
+(not committed to git — see `.gitignore`).
+
+## Status
+🚧 In progress — Phase 5 (Model Training & Evaluation) complete.
 
