@@ -50,7 +50,7 @@ def global_summary(explainer, X_test):
 
     os.makedirs(FIGURES_DIR, exist_ok=True)
     plt.figure()
-    shap.summary_plot(shap_values, X_test, show=False)
+    
     plt.tight_layout()
     summary_path = os.path.join(FIGURES_DIR, "shap_summary_plot.png")
     plt.savefig(summary_path, dpi=150, bbox_inches="tight")
