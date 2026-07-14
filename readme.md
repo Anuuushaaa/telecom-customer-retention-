@@ -157,5 +157,45 @@ TotalCharges fix, both category collapses, row-count preservation, and that
 customerID survives cleaning.
 
 ## Status
-🚧 In progress — Phase 3 (Data Cleaning) complete.
+## Feature Engineering & Preprocessing (Phase 4)
+
+Preprocessing logic lives in `src/preprocessing.py`, split into two functions:
+`split_data()` and `fit_transform_features()`. These are kept separate
+deliberately — the split must happen **before** any encoding/scaling, so that
+all learned transformations (the scaler) are fit on the training set only,
+never on test data. This prevents data leakage.
+
+**Steps applied:**
+- **Train/test split**: 80/20, stratified on `Churn` to preserve the original
+  26.54% churn rate in both sets (confirmed: 0.2654 in both train and test).
+- **Contract**: ordinal-encoded (`Month-to-month`=0, `One year`=1,
+  `Two year`=2) — a natural order exists, and this keeps feature count low.
+- **Other categoricals** (`gender`, `InternetService`, `PaymentMethod`):
+  one-hot encoded — no inherent order, so ordinal encoding would invent a
+  false relationship between categories.
+  - `gender` deliberately keeps both `gender_Female` and `gender_Male`
+    columns (`drop_first=False`) rather than dropping one. This is mildly
+    redundant but harmless for tree-based models and simpler to reason
+    about; a stricter choice for pure Logistic Regression would be to drop
+    one, but that's not required here.
+- **Binary Yes/No columns** (Partner, Dependents, PhoneService, the 6
+  internet-dependent columns, PaperlessBilling, MultipleLines): mapped
+  directly to 1/0 rather than one-hot encoded, since they're genuinely binary.
+- **Numeric columns** (tenure, MonthlyCharges, TotalCharges): scaled with
+  `StandardScaler`, fit on the training set only. Scaling isn't required for
+  tree-based models but is required for Logistic Regression, and since both
+  are being evaluated in Phase 5, scaling is applied to keep both viable.
+- **customerID**: excluded from the feature matrix, returned separately
+  (`customer_ids_train` / `customer_ids_test`) for later use in the
+  Streamlit app's per-customer lookup.
+- **Churn**: mapped to 1/0 as the target variable.
+
+Output: 25 features, 5634 training rows / 1409 test rows, zero NaNs.
+
+Unit tests in `tests/test_preprocessing.py` cover stratification, correct
+encoding of `Contract`, no data leakage in the scaler, exclusion of
+`customerID` from features, and absence of NaNs.
+
+## Status
+🚧 In progress — Phase 4 (Feature Engineering & Preprocessing) complete.
 
