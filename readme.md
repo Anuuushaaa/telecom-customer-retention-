@@ -238,5 +238,62 @@ Trained models and preprocessing artifacts are saved to `models/`
 (not committed to git — see `.gitignore`).
 
 ## Status
-🚧 In progress — Phase 5 (Model Training & Evaluation) complete.
+## Explainability (Phase 6)
+
+SHAP (`shap.LinearExplainer`, the correct explainer for a linear model —
+as opposed to `TreeExplainer` for tree-based models) is used to explain
+both global feature importance and individual predictions.
+
+**Global feature importance** (mean absolute SHAP value across the test
+set) largely matches domain intuition: `tenure` and `Contract` are by far
+the strongest churn drivers, followed by internet service type and billing
+amounts. Weak features like `DeviceProtection` and `Partner` rank lowest,
+consistent with them being indirect signals at best. This alignment with
+expectation is itself a sanity check — a wildly counter-intuitive global
+ranking would be a signal something upstream (leakage, a broken feature)
+needed investigating.
+
+**Per-customer explanations** attribute each individual prediction to
+specific feature contributions, which is the actionable output for a
+retention team ("this customer is flagged because of X and Y, despite Z").
+
+**Known limitation — multicollinearity between `tenure` and `TotalCharges`:**
+these two features are correlated (since `TotalCharges` accumulates over
+tenure), and in a handful of individual SHAP explanations they pushed in
+opposite directions despite that correlation — e.g. one customer had
+`tenure` pushing strongly *away* from churn while `TotalCharges` pushed
+*toward* it. This is a known consequence of multicollinearity in linear
+models: correlated features can receive unstable or counter-intuitive
+coefficient credit even when the model's overall prediction remains sound.
+This was documented rather than "fixed," since resolving it (e.g. dropping
+one feature) would trade away real signal for cosmetic consistency, and the
+model's aggregate performance (Phase 5) isn't compromised by it.
+
+SHAP explainer saved to `models/shap_explainer.pkl` for reuse in
+`predict.py` and the Streamlit app.
+
+## Status
+## Inference Pipeline (Phase 7)
+
+`predict.py` takes a single raw customer record (same shape as one row of
+the original CSV) and returns a churn prediction, probability, and SHAP
+explanation — the interface the Streamlit app will build on.
+
+**Guarding against training-serving skew:** `predict.py` reuses
+`clean_data()` unchanged, but does NOT reuse `fit_transform_features()`
+directly, since that function fits a scaler using both train and test sets.
+At inference time there's only one new customer, so `predict.py` uses the
+already-fitted scaler (`scaler.transform()`, never `.fit()`) and reindexes
+the encoded row against the exact saved `feature_columns` list from
+training, filling any missing dummy columns with 0.
+
+**Verified, not just assumed:** `tests/test_predict.py` runs a real
+test-set customer through both the training pipeline and `predict.py`
+independently, and asserts the resulting churn probabilities match to
+4 decimal places. This is a direct, executable proof against skew — not
+just "the code looks like it reuses the same logic."
+
+## Status
+🚧 In progress — Phase 7 (Inference Pipeline) complete.
+
 
