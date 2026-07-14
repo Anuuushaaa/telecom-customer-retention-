@@ -130,4 +130,32 @@ python -m pip install -r requirements.txt
   retained for the Streamlit app (per-customer lookup).
 
 ## Status
-🚧 In progress — Phase 2 (Dataset Understanding) complete.
+## Data Cleaning (Phase 3)
+
+Cleaning logic lives in `src/cleaning.py` as a single reusable function,
+`clean_data(df)`, so training and inference use identical preprocessing
+(avoids training-serving skew).
+
+**Steps applied:**
+- **TotalCharges**: converted from text to numeric; the 11 blank-string rows
+  (all `tenure == 0`) are filled with `0`, since a zero-tenure customer has
+  genuinely completed no billing cycle yet — not missing data in the
+  conventional sense.
+- **Categorical collapsing**: `"No internet service"` (in `OnlineSecurity`,
+  `OnlineBackup`, `DeviceProtection`, `TechSupport`, `StreamingTV`,
+  `StreamingMovies`) and `"No phone service"` (in `MultipleLines`) are
+  collapsed into `"No"`. These values are perfectly redundant with
+  `InternetService == "No"` / `PhoneService == "No"` respectively, so keeping
+  them as separate categories only added multicollinearity and diluted SHAP
+  attribution across features, with zero informational gain.
+- **customerID**: retained in the cleaned dataframe (needed for the Streamlit
+  app's per-customer lookup); it will be excluded from the model's feature
+  matrix at training time, not during cleaning.
+
+Unit tests for this function live in `tests/test_cleaning.py`, covering the
+TotalCharges fix, both category collapses, row-count preservation, and that
+customerID survives cleaning.
+
+## Status
+🚧 In progress — Phase 3 (Data Cleaning) complete.
+
