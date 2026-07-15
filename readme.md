@@ -5,6 +5,28 @@ A machine learning system that predicts telecom customer churn, explains *why*
 each customer is likely to churn using SHAP, and recommends retention actions.
 Built as an end-to-end, production-style Data Science portfolio project.
 
+## Key Findings
+
+- **Model**: Logistic Regression outperformed XGBoost on recall and F1 at
+  matched operating points — a reminder that a simpler, well-tuned model
+  can beat a more complex one that hasn't been tuned to the same objective.
+- **Threshold matters more than model choice**: comparing models at the
+  default 0.5 threshold was misleading. XGBoost's apparent recall deficit
+  mostly disappeared once thresholds were tuned to prioritize recall,
+  which the business case (catching churners) required.
+- **Top churn drivers** (via SHAP): tenure, contract type, and internet
+  service type — consistent with domain intuition and validated at both
+  the global and individual-customer level.
+- **Final model**: Logistic Regression @ threshold 0.35, chosen for
+  interpretability over XGBoost's marginal precision edge, given this
+  project's emphasis on explainability.
+- **Result**: recall 0.90 / precision 0.45 / F1 0.60 / ROC-AUC 0.84 on
+  held-out test data — catches ~9 in 10 churners, at the cost of some
+  false positives (an acceptable tradeoff, since a missed churner costs
+  more than an unnecessary retention offer).
+- Full inference pipeline (`predict.py`) verified against the training
+  pipeline via an automated test — confirms no training-serving skew.
+
 ## Problem Statement
 Telecom companies lose significant revenue when customers cancel their
 subscriptions (churn). Since acquiring a new customer typically costs far more
@@ -322,5 +344,6 @@ streamlit run app.py
 
 ## Status
 ✅ Complete — all 8 phases finished.
+
 
 
