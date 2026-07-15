@@ -271,7 +271,11 @@ model's aggregate performance (Phase 5) isn't compromised by it.
 
 SHAP explainer saved to `models/shap_explainer.pkl` for reuse in
 `predict.py` and the Streamlit app.
-
+**Note:** `shap.summary_plot()` has a known incompatibility with newer NumPy
+versions (`AttributeError: 'float' object has no attribute 'rint'`) in this
+SHAP version. Worked around by removing the broken plotting call and relying
+on the text-based `mean_abs_shap` summary plus custom-saved matplotlib plots
+(`reports/figures/`) instead.
 ## Status
 ## Inference Pipeline (Phase 7)
 
@@ -294,6 +298,29 @@ independently, and asserts the resulting churn probabilities match to
 just "the code looks like it reuses the same logic."
 
 ## Status
-🚧 In progress — Phase 7 (Inference Pipeline) complete.
+## Streamlit App (Phase 8)
+
+`app.py` is a thin UI wrapper around `predict.py` — it introduces no new
+modeling or encoding logic, so the training-serving skew guarantees from
+Phase 7 still hold for predictions made through the app.
+
+**Two input modes:**
+- **Lookup existing customer**: select any `customerID` from the dataset via
+  dropdown, view their raw data, and get a live prediction.
+- **Manual entry**: enter a hypothetical customer profile through a form,
+  for "what if" scenario testing.
+
+**Output:** churn prediction, probability, the decision threshold in use
+(0.35, tuned in Phase 5), and a SHAP bar chart showing the top 5 features
+driving that specific prediction — red bars push toward churn, green bars
+push away from it.
+
+Run locally with:
+```powershell
+streamlit run app.py
+```
+
+## Status
+✅ Complete — all 8 phases finished.
 
 
