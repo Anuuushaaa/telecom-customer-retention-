@@ -17,7 +17,7 @@ to transform (not re-fit) the test set. This prevents data leakage.
 """
 
 from dataclasses import dataclass
-
+from src.feature_engineering import engineer_features
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
@@ -45,7 +45,7 @@ NOMINAL_ONEHOT_COLS = [
     "PaymentMethod",
 ]
 
-NUMERIC_COLS = ["tenure", "MonthlyCharges", "TotalCharges"]
+NUMERIC_COLS = ["tenure", "MonthlyCharges", "TotalCharges", "avg_monthly_spend", "num_services_subscribed"]
 
 
 @dataclass
@@ -70,6 +70,7 @@ def split_data(df: pd.DataFrame, test_size: float = 0.2, random_state: int = 42)
     """
     df = df.copy()
     df["Churn"] = df["Churn"].map({"Yes": 1, "No": 0})
+    df = engineer_features(df)
 
     y = df["Churn"]
     train_df, test_df = train_test_split(

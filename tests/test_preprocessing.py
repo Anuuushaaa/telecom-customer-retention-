@@ -64,7 +64,7 @@ def test_no_leakage_scaler_fit_on_train_only():
     data = fit_transform_features(train_df, test_df)
     # Scaler's learned mean should match train data, not test or combined
     assert data.scaler.mean_ is not None
-    assert len(data.scaler.mean_) == 3  # tenure, MonthlyCharges, TotalCharges
+    assert len(data.scaler.mean_) == 5  # tenure, MonthlyCharges, TotalCharges
 
 
 def test_customer_id_excluded_from_features():

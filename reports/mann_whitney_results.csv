@@ -1,0 +1,4 @@
+feature,test,statistic,p_value,significant (p<0.05),median_churned,median_stayed
+tenure,Mann-Whitney U,2515538.0,2.419635517951866e-208,True,10.0,38.0
+MonthlyCharges,Mann-Whitney U,6003125.5,3.311627651988584e-54,True,79.65,64.43
+TotalCharges,Mann-Whitney U,3381224.0,5.685033866207314e-83,True,703.55,1679.52

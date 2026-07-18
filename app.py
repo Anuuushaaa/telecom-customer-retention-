@@ -113,8 +113,7 @@ if st.button("Predict Churn Risk", type="primary"):
     with col2:
         st.metric("Churn Probability", f"{result['churn_probability']:.1%}")
 
-    st.caption(f"Decision threshold: {result['threshold_used']} (tuned in Phase 5 to prioritize recall)")
-
+    st.caption(f"Decision threshold: {result['threshold_used']} (tuned via threshold sweep to prioritize recall)")
     # --- SHAP explanation bar chart ---
     st.subheader("Why this prediction?")
     st.caption("Positive values push toward churn, negative values push away from churn.")

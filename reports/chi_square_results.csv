@@ -1,0 +1,17 @@
+feature,test,chi2_statistic,p_value,significant (p<0.05),cramers_v
+Contract,Chi-square,1184.6,5.863038300673391e-258,True,0.41
+InternetService,Chi-square,732.31,9.571788222840544e-160,True,0.322
+PaymentMethod,Chi-square,648.14,3.6823546520097993e-140,True,0.303
+PaperlessBilling,Chi-square,258.28,4.073354668665985e-58,True,0.191
+OnlineSecurity,Chi-square,205.63,1.2320984831180025e-46,True,0.171
+TechSupport,Chi-square,190.17,2.9235674453140758e-43,True,0.164
+Dependents,Chi-square,189.13,4.9249216612154196e-43,True,0.164
+SeniorCitizen,Chi-square,159.43,1.510066805092378e-36,True,0.15
+Partner,Chi-square,158.73,2.1399113440759935e-36,True,0.15
+OnlineBackup,Chi-square,47.26,6.214092807254819e-12,True,0.082
+DeviceProtection,Chi-square,30.51,3.315693222362861e-08,True,0.066
+StreamingTV,Chi-square,27.86,1.3024835736732686e-07,True,0.063
+StreamingMovies,Chi-square,26.25,2.9974738476267514e-07,True,0.061
+MultipleLines,Chi-square,11.14,0.0008433795342472428,True,0.04
+PhoneService,Chi-square,0.92,0.3387825358066928,False,0.011
+gender,Chi-square,0.48,0.48657873605618596,False,0.008

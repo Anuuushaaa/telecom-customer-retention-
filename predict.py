@@ -11,7 +11,7 @@ Streamlit app.
 
 import joblib
 import pandas as pd
-
+from src.feature_engineering import engineer_features
 from src.cleaning import clean_data
 from src.config import CLASSIFICATION_THRESHOLD, PRODUCTION_MODEL_PATH
 from src.preprocessing import (
@@ -68,7 +68,8 @@ def predict_customer(raw_customer: dict) -> dict:
 
     df_raw = pd.DataFrame([raw_customer])
     df_clean = clean_data(df_raw)
-    X = _encode_single_customer(df_clean, feature_columns, scaler)
+    df_engineered = engineer_features(df_clean)
+    X = _encode_single_customer(df_engineered, feature_columns, scaler)
 
     proba = model.predict_proba(X)[0, 1]
     prediction = int(proba >= CLASSIFICATION_THRESHOLD)
