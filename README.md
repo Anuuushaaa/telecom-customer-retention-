@@ -359,8 +359,3 @@ Run locally with:
 streamlit run app.py
 ```
 
-## Status
-🚧 In progress — EDA, Statistical Analysis, Feature Engineering, Model
-Training, Explainability, Inference Pipeline, and the Streamlit App are
-all complete and verified. **Remaining: Testing (`tests/`) and final
-documentation polish.**
