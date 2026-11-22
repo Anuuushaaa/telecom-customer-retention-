@@ -1,78 +1,226 @@
+
 """
-app.py
+Telecom Customer Retention Intelligence
+Streamlit application for predicting customer churn.
 
-Phase 8: Streamlit app for the Telecom Customer Retention project.
-
-This is a THIN WRAPPER around predict.py — it introduces no new modeling
-or encoding logic, to avoid reopening the training-serving skew problem
-solved in Phase 7. Two input modes:
-1. Lookup an existing customer by customerID (realistic retention-team use)
-2. Manually enter a hypothetical customer profile
+Uses predict.py for preprocessing, model inference, and SHAP explanations.
 """
 
-import matplotlib.pyplot as plt
 import pandas as pd
 import streamlit as st
 
 from predict import predict_customer
 
-st.set_page_config(page_title="Telecom Churn Predictor", layout="centered")
 
-st.title("📞 Telecom Customer Retention Intelligence")
-st.markdown(
-    "Predicts customer churn risk and explains **why**, using SHAP — "
-    "built to support proactive retention outreach."
+# --------------------------------------------------
+# PAGE CONFIGURATION
+# --------------------------------------------------
+
+st.set_page_config(
+    page_title="Telecom Churn Predictor",
+    page_icon="📞",
+    layout="centered",
 )
 
-# --- Load raw data once, for the lookup mode ---
+st.title("📞 Telecom Customer Retention Intelligence")
+
+st.markdown(
+    "Predict customer churn risk and understand **why** using "
+    "machine learning and SHAP explanations."
+)
+
+st.divider()
+
+
+# --------------------------------------------------
+# LOAD CUSTOMER DATA
+# --------------------------------------------------
+
 @st.cache_data
 def load_raw_data():
     return pd.read_csv("data/raw/telco_churn.csv")
 
-df_raw = load_raw_data()
 
-# --- Mode selector ---
-mode = st.radio("Choose input mode:", ["Lookup existing customer", "Enter new customer manually"])
+try:
+    df_raw = load_raw_data()
+except Exception as error:
+    st.error(f"Unable to load customer dataset: {error}")
+    st.stop()
+
+
+# --------------------------------------------------
+# INPUT MODE SELECTION
+# --------------------------------------------------
+
+mode = st.radio(
+    "Choose input mode:",
+    [
+        "Lookup existing customer",
+        "Enter new customer manually",
+    ],
+)
 
 raw_customer = None
 
-if mode == "Lookup existing customer":
-    customer_id = st.selectbox("Select customerID:", df_raw["customerID"].tolist())
-    raw_row = df_raw[df_raw["customerID"] == customer_id].iloc[0]
-    raw_customer = raw_row.drop(labels=["Churn"]).to_dict()
 
-    with st.expander("View raw customer data"):
+# --------------------------------------------------
+# MODE 1: EXISTING CUSTOMER
+# --------------------------------------------------
+
+if mode == "Lookup existing customer":
+
+    st.subheader("Customer Lookup")
+
+    customer_id = st.selectbox(
+        "Select customer ID:",
+        df_raw["customerID"].tolist(),
+    )
+
+    raw_row = df_raw.loc[
+        df_raw["customerID"] == customer_id
+    ].iloc[0]
+
+    raw_customer = raw_row.drop(
+        labels=["Churn"],
+        errors="ignore",
+    ).to_dict()
+
+    with st.expander("View customer information"):
         st.json(raw_customer)
 
+
+# --------------------------------------------------
+# MODE 2: MANUAL CUSTOMER ENTRY
+# --------------------------------------------------
+
 else:
-    st.subheader("Enter customer details")
+
+    st.subheader("Enter Customer Details")
+
     col1, col2 = st.columns(2)
 
     with col1:
-        gender = st.selectbox("Gender", ["Female", "Male"])
-        senior_citizen = st.selectbox("Senior Citizen", [0, 1])
-        partner = st.selectbox("Partner", ["Yes", "No"])
-        dependents = st.selectbox("Dependents", ["Yes", "No"])
-        tenure = st.slider("Tenure (months)", 0, 72, 12)
-        phone_service = st.selectbox("Phone Service", ["Yes", "No"])
-        multiple_lines = st.selectbox("Multiple Lines", ["Yes", "No", "No phone service"])
-        internet_service = st.selectbox("Internet Service", ["DSL", "Fiber optic", "No"])
-        online_security = st.selectbox("Online Security", ["Yes", "No", "No internet service"])
-        online_backup = st.selectbox("Online Backup", ["Yes", "No", "No internet service"])
+
+        gender = st.selectbox(
+            "Gender",
+            ["Female", "Male"],
+        )
+
+        senior_citizen = st.selectbox(
+            "Senior Citizen",
+            [0, 1],
+        )
+
+        partner = st.selectbox(
+            "Partner",
+            ["Yes", "No"],
+        )
+
+        dependents = st.selectbox(
+            "Dependents",
+            ["Yes", "No"],
+        )
+
+        tenure = st.slider(
+            "Tenure (months)",
+            min_value=0,
+            max_value=72,
+            value=12,
+        )
+
+        phone_service = st.selectbox(
+            "Phone Service",
+            ["Yes", "No"],
+        )
+
+        multiple_lines = st.selectbox(
+            "Multiple Lines",
+            ["Yes", "No", "No phone service"],
+        )
+
+        internet_service = st.selectbox(
+            "Internet Service",
+            ["DSL", "Fiber optic", "No"],
+        )
+
+        online_security = st.selectbox(
+            "Online Security",
+            ["Yes", "No", "No internet service"],
+        )
+
+        online_backup = st.selectbox(
+            "Online Backup",
+            ["Yes", "No", "No internet service"],
+        )
 
     with col2:
-        device_protection = st.selectbox("Device Protection", ["Yes", "No", "No internet service"])
-        tech_support = st.selectbox("Tech Support", ["Yes", "No", "No internet service"])
-        streaming_tv = st.selectbox("Streaming TV", ["Yes", "No", "No internet service"])
-        streaming_movies = st.selectbox("Streaming Movies", ["Yes", "No", "No internet service"])
-        contract = st.selectbox("Contract", ["Month-to-month", "One year", "Two year"])
-        paperless_billing = st.selectbox("Paperless Billing", ["Yes", "No"])
+
+        device_protection = st.selectbox(
+            "Device Protection",
+            ["Yes", "No", "No internet service"],
+        )
+
+        tech_support = st.selectbox(
+            "Tech Support",
+            ["Yes", "No", "No internet service"],
+        )
+
+        streaming_tv = st.selectbox(
+            "Streaming TV",
+            ["Yes", "No", "No internet service"],
+        )
+
+        streaming_movies = st.selectbox(
+            "Streaming Movies",
+            ["Yes", "No", "No internet service"],
+        )
+
+        contract = st.selectbox(
+            "Contract",
+            ["Month-to-month", "One year", "Two year"],
+        )
+
+        paperless_billing = st.selectbox(
+            "Paperless Billing",
+            ["Yes", "No"],
+        )
+
         payment_method = st.selectbox(
             "Payment Method",
-            ["Electronic check", "Mailed check", "Bank transfer (automatic)", "Credit card (automatic)"],
+            [
+                "Electronic check",
+                "Mailed check",
+                "Bank transfer (automatic)",
+                "Credit card (automatic)",
+            ],
         )
-        monthly_charges = st.number_input("Monthly Charges", 0.0, 200.0, 70.0)
-        total_charges = st.number_input("Total Charges", 0.0, 10000.0, 840.0)
+
+        monthly_charges = st.number_input(
+            "Monthly Charges",
+            min_value=0.0,
+            max_value=200.0,
+            value=70.0,
+        )
+
+        total_charges = st.number_input(
+            "Total Charges",
+            min_value=0.0,
+            max_value=10000.0,
+            value=840.0,
+        )
+
+    # Ensure manually entered services are consistent.
+
+    if phone_service == "No":
+        multiple_lines = "No phone service"
+
+    if internet_service == "No":
+        online_security = "No internet service"
+        online_backup = "No internet service"
+        device_protection = "No internet service"
+        tech_support = "No internet service"
+        streaming_tv = "No internet service"
+        streaming_movies = "No internet service"
 
     raw_customer = {
         "customerID": "MANUAL-ENTRY",
@@ -97,34 +245,181 @@ else:
         "TotalCharges": str(total_charges),
     }
 
-# --- Predict button ---
-if st.button("Predict Churn Risk", type="primary"):
-    result = predict_customer(raw_customer)
+    with st.expander("View entered customer information"):
+        st.json(raw_customer)
 
-    st.divider()
 
-    # --- Prediction display ---
-    col1, col2 = st.columns(2)
-    with col1:
-        if result["prediction"] == "Churn":
-            st.error(f"⚠️ Prediction: **{result['prediction']}**")
+# --------------------------------------------------
+# PREDICTION
+# --------------------------------------------------
+
+st.divider()
+
+if st.button(
+    "Predict Churn Risk",
+    type="primary",
+    use_container_width=True,
+):
+
+    if raw_customer is None:
+        st.warning("Please provide customer information.")
+        st.stop()
+
+    try:
+
+        with st.spinner("Analyzing customer churn risk..."):
+            result = predict_customer(raw_customer)
+
+        st.divider()
+
+        st.subheader("Prediction Results")
+
+        # ------------------------------------------
+        # PREDICTION SUMMARY
+        # ------------------------------------------
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+
+            if result["prediction"] == "Churn":
+
+                st.error(
+                    "⚠️ **High Churn Risk**"
+                )
+
+            else:
+
+                st.success(
+                    "✅ **Predicted to Stay**"
+                )
+
+        with col2:
+
+            st.metric(
+                "Churn Probability",
+                f"{result['churn_probability']:.1%}",
+            )
+
+        st.caption(
+            f"Classification threshold: "
+            f"{result['threshold_used']:.2f} "
+            "(selected using validation data to balance "
+            "recall and precision)"
+        )
+
+        # ------------------------------------------
+        # RISK INDICATOR
+        # ------------------------------------------
+
+        st.subheader("Customer Churn Risk")
+
+        probability = result["churn_probability"]
+
+        st.progress(
+            min(max(float(probability), 0.0), 1.0)
+        )
+
+        st.write(
+            f"Estimated churn probability: "
+            f"**{probability:.1%}**"
+        )
+
+        # ------------------------------------------
+        # SHAP EXPLANATIONS
+        # ------------------------------------------
+
+        st.divider()
+
+        st.subheader("Why This Prediction?")
+
+        st.markdown(
+            "SHAP explains which customer characteristics "
+            "influenced the model's prediction."
+        )
+
+        st.caption(
+            "Positive SHAP values push the prediction "
+            "toward churn. Negative values push it "
+            "away from churn."
+        )
+
+        contributors = result["top_contributors"]
+
+        if contributors:
+
+            chart_df = pd.DataFrame(
+                {
+                    "Feature": list(contributors.keys()),
+                    "SHAP Contribution": [
+                        float(value)
+                        for value in contributors.values()
+                    ],
+                }
+            )
+
+            chart_df = chart_df.set_index("Feature")
+
+            # Native Streamlit chart avoids the
+            # Matplotlib image-rendering issue.
+
+            st.bar_chart(
+                chart_df,
+                horizontal=True,
+                x_label="SHAP contribution (log-odds)",
+                y_label="Feature",
+            )
+
+            with st.expander(
+                "View exact SHAP contributions"
+            ):
+                st.dataframe(
+                    chart_df,
+                    use_container_width=True,
+                )
+
         else:
-            st.success(f"✅ Prediction: **{result['prediction']}**")
-    with col2:
-        st.metric("Churn Probability", f"{result['churn_probability']:.1%}")
 
-    st.caption(f"Decision threshold: {result['threshold_used']} (tuned via threshold sweep to prioritize recall)")
-    # --- SHAP explanation bar chart ---
-    st.subheader("Why this prediction?")
-    st.caption("Positive values push toward churn, negative values push away from churn.")
+            st.info(
+                "No SHAP contributions were returned."
+            )
 
-    contributors = result["top_contributors"]
-    fig, ax = plt.subplots(figsize=(7, 4))
-    features = list(contributors.keys())
-    values = list(contributors.values())
-    colors = ["#d62728" if v > 0 else "#2ca02c" for v in values]
-    ax.barh(features, values, color=colors)
-    ax.axvline(0, color="black", linewidth=0.8)
-    ax.set_xlabel("SHAP value (impact on churn prediction)")
-    ax.invert_yaxis()
-    st.pyplot(fig)
+        # ------------------------------------------
+        # INTERPRETATION
+        # ------------------------------------------
+
+        st.divider()
+
+        st.subheader("Interpretation")
+
+        if result["prediction"] == "Churn":
+
+            st.warning(
+                "This customer is predicted to churn "
+                "under the selected classification threshold. "
+                "The retention team may prioritize this "
+                "customer for further review."
+            )
+
+        else:
+
+            st.success(
+                "This customer is predicted not to churn "
+                "under the selected classification threshold."
+            )
+
+        st.caption(
+            "Predictions are statistical estimates, "
+            "not guarantees. SHAP contributions explain "
+            "the model's behavior rather than proving "
+            "causal relationships."
+        )
+
+    except Exception as error:
+
+        st.error(
+            "An error occurred while generating "
+            "the prediction."
+        )
+
+        st.exception(error)

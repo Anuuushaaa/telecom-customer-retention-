@@ -1,91 +1,112 @@
+
 """
 src/explain.py
 
-Phase 9: SHAP explainability for the Logistic Regression production model.
+SHAP explainability for the selected Logistic Regression model.
 
-Uses shap.LinearExplainer, the correct explainer for linear models (as
-opposed to TreeExplainer for tree-based models, or the slower
-model-agnostic KernelExplainer). Produces:
-1. Global summary (text + beeswarm plot) — feature importance across all
-   test customers, and a sanity check that the model's reasoning matches
-   domain intuition.
-2. Per-customer local explanation (text + waterfall plot) — the actionable
-   output for the retention-team use case.
+Uses the same training split and preprocessing as src/train.py.
 
-Plots are saved as PNG files under reports/figures/, since this script runs
-headless (no notebook to render inline plots into).
+Outputs:
+1. Global SHAP feature importance
+2. SHAP beeswarm summary plot
+3. Individual customer waterfall explanation
+4. Saved SHAP explainer for inference
+
+The explainer is saved alongside the candidate model.
 """
 
-import os
+from pathlib import Path
 
 import joblib
 import matplotlib
-matplotlib.use("Agg")  # non-interactive backend, required for headless PNG saving
+
+matplotlib.use("Agg")
+
 import matplotlib.pyplot as plt
 import pandas as pd
 import shap
 
 from src.cleaning import clean_data
-from src.preprocessing import fit_transform_features, split_data
+from src.preprocessing import (
+    fit_transform_features,
+    split_train_validation_test,
+)
 
-FIGURES_DIR = "reports/figures"
+
+FIGURES_DIR = Path("reports/figures")
+CANDIDATES_DIR = Path("models/candidates")
 
 
 def build_explainer(model, X_train):
-    """LinearExplainer needs the training data to establish a background
-    distribution (baseline) against which SHAP values are computed."""
-    return shap.LinearExplainer(model, X_train)
+    """
+    Build a SHAP LinearExplainer using training data
+    as the background distribution.
+    """
+    return shap.LinearExplainer(
+        model,
+        X_train.astype(float),
+    )
 
 
-def global_summary(explainer, X_test):
-    """Compute SHAP values for the whole test set, print mean absolute SHAP
-    value per feature, and save a beeswarm summary plot."""
-    # Cast to float defensively: shap.summary_plot buckets feature values
-    # for its color gradient using numpy rounding, which throws a cryptic
-    # error if any column isn't already a clean numeric dtype.
-    X_test = X_test.astype(float)
+def global_summary(explainer, X_data):
+    """Generate global feature importance and a beeswarm plot."""
 
-    shap_values = explainer.shap_values(X_test)
+    X_data = X_data.astype(float)
+
+    shap_values = explainer.shap_values(X_data)
+
     mean_abs_shap = pd.Series(
-        abs(shap_values).mean(axis=0), index=X_test.columns
+        abs(shap_values).mean(axis=0),
+        index=X_data.columns,
     ).sort_values(ascending=False)
 
-    print("\nGlobal feature importance (mean |SHAP value|):")
+    print("\nGlobal feature importance (mean absolute SHAP):")
     print(mean_abs_shap.round(4))
 
-    os.makedirs(FIGURES_DIR, exist_ok=True)
-    # Don't pre-create a figure — summary_plot manages its own internally.
-    # Grab whatever figure it actually drew onto via plt.gcf() afterward,
-    # rather than saving a separate, empty pre-created figure.
-    shap.summary_plot(shap_values, X_test, show=False)
+    FIGURES_DIR.mkdir(parents=True, exist_ok=True)
+
+    shap.summary_plot(
+        shap_values,
+        X_data,
+        show=False,
+    )
+
     fig = plt.gcf()
     fig.tight_layout()
-    summary_path = os.path.join(FIGURES_DIR, "shap_summary_plot.png")
-    fig.savefig(summary_path, dpi=150, bbox_inches="tight")
+
+    output_path = FIGURES_DIR / "shap_summary_plot.png"
+
+    fig.savefig(
+        output_path,
+        dpi=150,
+        bbox_inches="tight",
+    )
+
     plt.close(fig)
-    print(f"Saved summary plot to {summary_path}")
+
+    print(f"\nSaved global SHAP plot: {output_path}")
 
     return shap_values, mean_abs_shap
 
 
-def explain_customer(explainer, X_row: pd.DataFrame, customer_id: str):
-    """Explain a single customer's prediction: print the text breakdown and
-    save a waterfall plot. X_row must be a single-row dataframe with the
-    same columns/order as training data."""
+def explain_customer(explainer, X_row, customer_id):
+    """Generate an individual customer SHAP explanation."""
+
     X_row = X_row.astype(float)
 
     shap_values = explainer.shap_values(X_row)
+
     contributions = pd.Series(
-        shap_values[0], index=X_row.columns
-    ).sort_values(key=abs, ascending=False)
+        shap_values[0],
+        index=X_row.columns,
+    ).sort_values(
+        key=abs,
+        ascending=False,
+    )
 
     print(f"\nExplanation for customer {customer_id}:")
-    print("(positive = pushes toward churn, negative = pushes away from churn)\n")
     print(contributions.round(4))
 
-    # shap.plots.waterfall expects a shap.Explanation object, not a raw
-    # array — we build one manually here since LinearExplainer.shap_values()
-    # returns a plain numpy array rather than an Explanation object.
     explanation = shap.Explanation(
         values=shap_values[0],
         base_values=explainer.expected_value,
@@ -93,40 +114,93 @@ def explain_customer(explainer, X_row: pd.DataFrame, customer_id: str):
         feature_names=list(X_row.columns),
     )
 
-    os.makedirs(FIGURES_DIR, exist_ok=True)
-    shap.plots.waterfall(explanation, show=False)
+    FIGURES_DIR.mkdir(parents=True, exist_ok=True)
+
+    shap.plots.waterfall(
+        explanation,
+        show=False,
+    )
+
     fig = plt.gcf()
     fig.tight_layout()
-    safe_id = str(customer_id).replace("/", "_")
-    waterfall_path = os.path.join(FIGURES_DIR, f"shap_waterfall_{safe_id}.png")
-    fig.savefig(waterfall_path, dpi=150, bbox_inches="tight")
+
+    safe_id = str(customer_id).replace("/", "_").replace("\\", "_")
+
+    output_path = FIGURES_DIR / f"shap_waterfall_{safe_id}.png"
+
+    fig.savefig(
+        output_path,
+        dpi=150,
+        bbox_inches="tight",
+    )
+
     plt.close(fig)
-    print(f"Saved waterfall plot to {waterfall_path}")
+
+    print(f"\nSaved customer SHAP plot: {output_path}")
 
     return contributions
 
 
 def main():
+    # Load and clean data
     df_raw = pd.read_csv("data/raw/telco_churn.csv")
     df_clean = clean_data(df_raw)
-    train_df, test_df = split_data(df_clean)
-    data = fit_transform_features(train_df, test_df)
 
-    model = joblib.load("models/logistic_regression.pkl")
-    explainer = build_explainer(model, data.X_train.astype(float))
+    # Recreate the exact split used during training
+    train_df, val_df, test_df = split_train_validation_test(
+        df_clean
+    )
 
-    # 1. Global summary — text + beeswarm plot
-    shap_values, mean_abs_shap = global_summary(explainer, data.X_test)
+    data = fit_transform_features(
+        train_df,
+        test_df,
+        val_df=val_df,
+    )
 
-    # 2. Per-customer explanation — text + waterfall plot, first test customer as demo
+    # Load the selected candidate model
+    model = joblib.load(
+        CANDIDATES_DIR / "logistic_regression.pkl"
+    )
+
+    # Build explainer using TRAINING data only
+    explainer = build_explainer(
+        model,
+        data.X_train,
+    )
+
+    # Global explanation on validation data
+    global_summary(
+        explainer,
+        data.X_val,
+    )
+
+    # Local explanation for one validation customer
     sample_idx = 0
-    sample_row = data.X_test.iloc[[sample_idx]]
-    sample_customer_id = data.customer_ids_test.iloc[sample_idx]
-    explain_customer(explainer, sample_row, sample_customer_id)
 
-    # Save explainer for reuse in predict.py / app.py
-    joblib.dump(explainer, "models/shap_explainer.pkl")
-    print("\nExplainer saved to models/shap_explainer.pkl")
+    sample_row = data.X_val.iloc[[sample_idx]]
+    sample_customer_id = data.customer_ids_val.iloc[sample_idx]
+
+    explain_customer(
+        explainer,
+        sample_row,
+        sample_customer_id,
+    )
+
+    # Save the new candidate explainer
+    CANDIDATES_DIR.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    output_path = CANDIDATES_DIR / "shap_explainer.pkl"
+
+    joblib.dump(
+        explainer,
+        output_path,
+    )
+
+    print(f"\nSHAP explainer saved: {output_path}")
+    print("Existing production explainer has not been overwritten.")
 
 
 if __name__ == "__main__":
