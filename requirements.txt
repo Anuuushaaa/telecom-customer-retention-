@@ -62,3 +62,4 @@ tzdata
 urllib3
 watchdog
 xgboost
+statsmodels==0.15.0

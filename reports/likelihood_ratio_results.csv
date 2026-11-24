@@ -1,0 +1,3 @@
+comparison,full_log_likelihood,reduced_log_likelihood,lr_statistic,degrees_of_freedom,p_value,significant
+Full model vs without Contract,-2968.49422775137,-3013.938686688155,90.88891787356988,2,1.8353641764492984e-20,True
+Full model vs without PaymentMethod,-2968.49422775137,-2987.4885045833053,37.988553663870334,3,2.8422904142613407e-08,True
