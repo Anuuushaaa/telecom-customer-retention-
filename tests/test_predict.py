@@ -14,7 +14,10 @@ import pytest
 
 from predict import predict_customer
 from src.cleaning import clean_data
-from src.preprocessing import fit_transform_features, split_data
+from src.preprocessing import (
+    fit_transform_features,
+    split_train_validation_test,
+)
 
 
 @pytest.fixture(scope="module")
@@ -22,8 +25,13 @@ def pipeline_artifacts():
     """Rebuild the training pipeline once for all tests in this module."""
     df_raw = pd.read_csv("data/raw/telco_churn.csv")
     df_clean = clean_data(df_raw)
-    train_df, test_df = split_data(df_clean)
-    data = fit_transform_features(train_df, test_df)
+    train_df, val_df, test_df = split_train_validation_test(df_clean)
+
+    data = fit_transform_features(
+    train_df,
+    test_df,
+    val_df=val_df,
+  )
     model = joblib.load("src/../models/logistic_regression.pkl")
     return df_raw, test_df, data, model
 
