@@ -1,0 +1,140 @@
+{
+    "logistic_regression": {
+        "study_name": "telecom_logistic_regression_full_v1",
+        "best_trial": 28,
+        "best_cv_roc_auc": 0.8484528156635286,
+        "cv_std": 0.007076071221501149,
+        "fold_scores": [
+            0.8453796274768142,
+            0.8434329305409851,
+            0.8565458889727863
+        ],
+        "best_epochs": [],
+        "best_params": {
+            "C": 88.0402070706879,
+            "solver": "lbfgs",
+            "l1_ratio": 0.0
+        },
+        "trial_counts": {
+            "completed": 22,
+            "pruned": 8,
+            "failed": 0,
+            "running": 0,
+            "waiting": 0
+        },
+        "configuration": {
+            "study_version": "v1",
+            "model_name": "logistic_regression",
+            "dataset_hash": "88be4b93fbe0cc83421af1c503794c97c342eca914c1576db7c276e61d61358a",
+            "code_hash": "a1c1818801a7a399159838f1def4699a8a9f7a48564e7cd2382e837deff45c96",
+            "n_splits": 3,
+            "random_state": 42,
+            "objective": "roc_auc",
+            "direction": "maximize",
+            "sampler": "TPE",
+            "pruner": "MedianPruner",
+            "ann_max_epochs": 50,
+            "ann_patience": 7,
+            "smoke_test": false
+        }
+    },
+    "xgboost": {
+        "study_name": "telecom_xgboost_full_v1",
+        "best_trial": 34,
+        "best_cv_roc_auc": 0.8497305962170664,
+        "cv_std": 0.010251561995121828,
+        "fold_scores": [
+            0.8495117414554755,
+            0.8395902138296356,
+            0.8600898333660878
+        ],
+        "best_epochs": [],
+        "best_params": {
+            "n_estimators": 300,
+            "max_depth": 2,
+            "learning_rate": 0.11921672575283246,
+            "subsample": 0.8565696329368367,
+            "colsample_bytree": 0.9237895567981191,
+            "min_child_weight": 2,
+            "gamma": 2.8251849954740824,
+            "reg_alpha": 8.244888278966288,
+            "reg_lambda": 0.014934219745513743
+        },
+        "trial_counts": {
+            "completed": 31,
+            "pruned": 9,
+            "failed": 0,
+            "running": 0,
+            "waiting": 0
+        },
+        "configuration": {
+            "study_version": "v1",
+            "model_name": "xgboost",
+            "dataset_hash": "88be4b93fbe0cc83421af1c503794c97c342eca914c1576db7c276e61d61358a",
+            "code_hash": "a1c1818801a7a399159838f1def4699a8a9f7a48564e7cd2382e837deff45c96",
+            "n_splits": 3,
+            "random_state": 42,
+            "objective": "roc_auc",
+            "direction": "maximize",
+            "sampler": "TPE",
+            "pruner": "MedianPruner",
+            "ann_max_epochs": 50,
+            "ann_patience": 7,
+            "smoke_test": false
+        }
+    },
+    "tensorflow_ann": {
+        "study_name": "telecom_tensorflow_ann_full_v1",
+        "best_trial": 5,
+        "best_cv_roc_auc": 0.8482456483976035,
+        "cv_std": 0.004706236364510435,
+        "fold_scores": [
+            0.8462140587460281,
+            0.8448964525780006,
+            0.8536264338687821
+        ],
+        "best_epochs": [
+            21,
+            28,
+            36
+        ],
+        "best_params": {
+            "hidden_units": [
+                16,
+                64,
+                32
+            ],
+            "dropout_rates": [
+                0.24709693167050267,
+                0.4630659181130071,
+                0.32233747171788024
+            ],
+            "activation": "elu",
+            "learning_rate": 0.006939674524297944,
+            "batch_size": 64,
+            "l2_strength": 0.0011862232253479006
+        },
+        "trial_counts": {
+            "completed": 11,
+            "pruned": 9,
+            "failed": 0,
+            "running": 0,
+            "waiting": 0
+        },
+        "configuration": {
+            "study_version": "v1",
+            "model_name": "tensorflow_ann",
+            "dataset_hash": "88be4b93fbe0cc83421af1c503794c97c342eca914c1576db7c276e61d61358a",
+            "code_hash": "a1c1818801a7a399159838f1def4699a8a9f7a48564e7cd2382e837deff45c96",
+            "n_splits": 3,
+            "random_state": 42,
+            "objective": "roc_auc",
+            "direction": "maximize",
+            "sampler": "TPE",
+            "pruner": "MedianPruner",
+            "ann_max_epochs": 50,
+            "ann_patience": 7,
+            "smoke_test": false
+        }
+    }
+}

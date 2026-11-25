@@ -1,13 +1,15 @@
 """
 src/train_ann.py
 
-TensorFlow Artificial Neural Network for telecom customer churn.
+Configurable TensorFlow Artificial Neural Network
+for telecom customer churn.
 
 Features:
-- Binary classification using TensorFlow/Keras
-- Class-weighted training
-- Dropout regularization
-- Early stopping
+- Configurable neural network architecture
+- Class-weighted binary classification
+- Dropout and L2 regularization
+- Early stopping and learning rate scheduling
+- Optuna-compatible callbacks
 - Reproducible initialization
 - Validation performance evaluation
 - Training history export
@@ -23,7 +25,7 @@ import pandas as pd
 import tensorflow as tf
 
 from tensorflow import keras
-from tensorflow.keras import layers
+from tensorflow.keras import layers, regularizers
 
 from sklearn.utils.class_weight import compute_class_weight
 from sklearn.metrics import (
@@ -38,55 +40,153 @@ from sklearn.metrics import (
 
 
 RANDOM_STATE = 42
+
 DEFAULT_EPOCHS = 100
 DEFAULT_BATCH_SIZE = 32
 DEFAULT_LEARNING_RATE = 0.001
 
+DEFAULT_HIDDEN_UNITS = (64, 32)
+DEFAULT_DROPOUT_RATES = (0.30, 0.20)
+DEFAULT_ACTIVATION = "relu"
+DEFAULT_L2_STRENGTH = 0.0
+DEFAULT_PATIENCE = 10
+
+SUPPORTED_ACTIVATIONS = (
+    "relu",
+    "elu",
+    "tanh",
+)
+
 CANDIDATE_DIR = Path("models/candidates")
 REPORTS_DIR = Path("reports")
+
+
+def validate_ann_hyperparameters(
+    input_dim,
+    learning_rate,
+    hidden_units,
+    dropout_rates,
+    activation,
+    l2_strength,
+):
+    """Validate ANN architecture and optimization parameters."""
+
+    if (
+        isinstance(input_dim, bool)
+        or not isinstance(input_dim, (int, np.integer))
+        or input_dim <= 0
+    ):
+        raise ValueError("input_dim must be a positive integer.")
+
+    if not np.isfinite(learning_rate) or learning_rate <= 0:
+        raise ValueError("learning_rate must be positive and finite.")
+
+    if not isinstance(hidden_units, (list, tuple)):
+        raise ValueError("hidden_units must be a list or tuple.")
+
+    if len(hidden_units) == 0:
+        raise ValueError("At least one hidden layer is required.")
+
+    for units in hidden_units:
+        if (
+            isinstance(units, bool)
+            or not isinstance(units, (int, np.integer))
+            or units <= 0
+        ):
+            raise ValueError(
+                "Hidden layer units must be positive integers."
+            )
+
+    if not isinstance(dropout_rates, (list, tuple)):
+        raise ValueError("dropout_rates must be a list or tuple.")
+
+    if len(dropout_rates) != len(hidden_units):
+        raise ValueError(
+            "Each hidden layer must have a corresponding dropout rate."
+        )
+
+    for rate in dropout_rates:
+        if not np.isfinite(rate) or not 0 <= rate < 1:
+            raise ValueError(
+                "Dropout rates must be between 0 and 1, excluding 1."
+            )
+
+    if activation not in SUPPORTED_ACTIVATIONS:
+        raise ValueError(
+            f"Unsupported activation: {activation}. "
+            f"Choose from {SUPPORTED_ACTIVATIONS}."
+        )
+
+    if not np.isfinite(l2_strength) or l2_strength < 0:
+        raise ValueError(
+            "l2_strength must be non-negative and finite."
+        )
 
 
 def build_ann(
     input_dim: int,
     learning_rate: float = DEFAULT_LEARNING_RATE,
     random_state: int = RANDOM_STATE,
+    hidden_units=DEFAULT_HIDDEN_UNITS,
+    dropout_rates=DEFAULT_DROPOUT_RATES,
+    activation: str = DEFAULT_ACTIVATION,
+    l2_strength: float = DEFAULT_L2_STRENGTH,
 ) -> keras.Model:
-    """Build and compile a binary classification ANN."""
+    """Build and compile a configurable binary classification ANN."""
 
-    if input_dim <= 0:
-        raise ValueError("input_dim must be positive.")
-
-    if learning_rate <= 0:
-        raise ValueError("learning_rate must be positive.")
+    validate_ann_hyperparameters(
+        input_dim=input_dim,
+        learning_rate=learning_rate,
+        hidden_units=hidden_units,
+        dropout_rates=dropout_rates,
+        activation=activation,
+        l2_strength=l2_strength,
+    )
 
     keras.utils.set_random_seed(random_state)
 
+    kernel_initializer = (
+        "glorot_uniform"
+        if activation == "tanh"
+        else "he_normal"
+    )
+
+    kernel_regularizer = (
+        regularizers.l2(l2_strength)
+        if l2_strength > 0
+        else None
+    )
+
     model = keras.Sequential(
-        [
-            keras.Input(shape=(input_dim,)),
+        name="telecom_churn_ann"
+    )
 
+    model.add(
+        keras.Input(shape=(input_dim,))
+    )
+
+    for units, dropout_rate in zip(
+        hidden_units,
+        dropout_rates,
+    ):
+        model.add(
             layers.Dense(
-                64,
-                activation="relu",
-                kernel_initializer="he_normal",
-            ),
+                units=int(units),
+                activation=activation,
+                kernel_initializer=kernel_initializer,
+                kernel_regularizer=kernel_regularizer,
+            )
+        )
 
-            layers.Dropout(0.30),
+        model.add(
+            layers.Dropout(float(dropout_rate))
+        )
 
-            layers.Dense(
-                32,
-                activation="relu",
-                kernel_initializer="he_normal",
-            ),
-
-            layers.Dropout(0.20),
-
-            layers.Dense(
-                1,
-                activation="sigmoid",
-            ),
-        ],
-        name="telecom_churn_ann",
+    model.add(
+        layers.Dense(
+            1,
+            activation="sigmoid",
+        )
     )
 
     model.compile(
@@ -142,23 +242,30 @@ def calculate_class_weights(y_train) -> dict:
 
 
 def prepare_ann_inputs(X, y=None):
-    """Convert preprocessed features and labels to TensorFlow-compatible arrays."""
+    """Convert features and labels to TensorFlow-compatible arrays."""
 
     X_array = np.asarray(X, dtype=np.float32)
 
     if X_array.ndim != 2:
-        raise ValueError("Features must be a two-dimensional array.")
+        raise ValueError(
+            "Features must be a two-dimensional array."
+        )
 
     if X_array.shape[0] == 0 or X_array.shape[1] == 0:
         raise ValueError("Feature array cannot be empty.")
 
     if not np.isfinite(X_array).all():
-        raise ValueError("Features contain NaN or infinite values.")
+        raise ValueError(
+            "Features contain NaN or infinite values."
+        )
 
     if y is None:
         return X_array
 
-    y_array = np.asarray(y, dtype=np.float32).reshape(-1)
+    y_array = np.asarray(
+        y,
+        dtype=np.float32,
+    ).reshape(-1)
 
     if len(X_array) != len(y_array):
         raise ValueError(
@@ -166,7 +273,9 @@ def prepare_ann_inputs(X, y=None):
         )
 
     if not np.isin(y_array, [0, 1]).all():
-        raise ValueError("Labels must contain only 0 and 1.")
+        raise ValueError(
+            "Labels must contain only 0 and 1."
+        )
 
     return X_array, y_array
 
@@ -181,14 +290,27 @@ def train_ann(
     learning_rate: float = DEFAULT_LEARNING_RATE,
     random_state: int = RANDOM_STATE,
     verbose: int = 1,
+    hidden_units=DEFAULT_HIDDEN_UNITS,
+    dropout_rates=DEFAULT_DROPOUT_RATES,
+    activation: str = DEFAULT_ACTIVATION,
+    l2_strength: float = DEFAULT_L2_STRENGTH,
+    patience: int = DEFAULT_PATIENCE,
+    additional_callbacks=None,
 ):
-    """Train an ANN using training and validation data."""
+    """Train an ANN with configurable hyperparameters."""
 
     if epochs <= 0:
         raise ValueError("epochs must be positive.")
 
     if batch_size <= 0:
         raise ValueError("batch_size must be positive.")
+
+    if (
+        isinstance(patience, bool)
+        or not isinstance(patience, (int, np.integer))
+        or patience <= 0
+    ):
+        raise ValueError("patience must be a positive integer.")
 
     X_train_array, y_train_array = prepare_ann_inputs(
         X_train,
@@ -205,7 +327,9 @@ def train_ann(
             "Training and validation feature counts must match."
         )
 
-    class_weights = calculate_class_weights(y_train_array)
+    class_weights = calculate_class_weights(
+        y_train_array
+    )
 
     keras.backend.clear_session()
     keras.utils.set_random_seed(random_state)
@@ -214,12 +338,16 @@ def train_ann(
         input_dim=X_train_array.shape[1],
         learning_rate=learning_rate,
         random_state=random_state,
+        hidden_units=hidden_units,
+        dropout_rates=dropout_rates,
+        activation=activation,
+        l2_strength=l2_strength,
     )
 
     early_stopping = keras.callbacks.EarlyStopping(
         monitor="val_loss",
         mode="min",
-        patience=10,
+        patience=patience,
         min_delta=0.0001,
         restore_best_weights=True,
     )
@@ -228,13 +356,52 @@ def train_ann(
         monitor="val_loss",
         mode="min",
         factor=0.5,
-        patience=5,
+        patience=max(1, patience // 2),
         min_lr=0.000001,
     )
 
+    callbacks = [
+        early_stopping,
+        reduce_lr,
+    ]
+
+    if additional_callbacks is not None:
+        callbacks.extend(additional_callbacks)
+
     if verbose:
+        print("\nANN hyperparameters:")
+
+        print(
+            f"Hidden units: {hidden_units}"
+        )
+
+        print(
+            f"Dropout rates: {dropout_rates}"
+        )
+
+        print(
+            f"Activation: {activation}"
+        )
+
+        print(
+            f"Learning rate: {learning_rate}"
+        )
+
+        print(
+            f"L2 strength: {l2_strength}"
+        )
+
+        print(
+            f"Batch size: {batch_size}"
+        )
+
+        print(
+            f"Early stopping patience: {patience}"
+        )
+
         print("\nANN class weights:")
         print(class_weights)
+
         model.summary()
 
     history = model.fit(
@@ -247,10 +414,7 @@ def train_ann(
         epochs=epochs,
         batch_size=batch_size,
         class_weight=class_weights,
-        callbacks=[
-            early_stopping,
-            reduce_lr,
-        ],
+        callbacks=callbacks,
         shuffle=True,
         verbose=verbose,
     )
@@ -306,7 +470,10 @@ def evaluate_ann(
 
     X_array, y_array = prepare_ann_inputs(X, y)
 
-    if not np.array_equal(np.unique(y_array), [0, 1]):
+    if not np.array_equal(
+        np.unique(y_array),
+        [0, 1],
+    ):
         raise ValueError(
             "Evaluation labels must contain both classes."
         )
@@ -323,28 +490,41 @@ def evaluate_ann(
     metrics = {
         "model": model_name,
         "accuracy": accuracy_score(
-            y_array, y_pred
+            y_array,
+            y_pred,
         ),
         "precision": precision_score(
-            y_array, y_pred, zero_division=0
+            y_array,
+            y_pred,
+            zero_division=0,
         ),
         "recall": recall_score(
-            y_array, y_pred, zero_division=0
+            y_array,
+            y_pred,
+            zero_division=0,
         ),
         "f1": f1_score(
-            y_array, y_pred, zero_division=0
+            y_array,
+            y_pred,
+            zero_division=0,
         ),
         "roc_auc": roc_auc_score(
-            y_array, y_proba
+            y_array,
+            y_proba,
         ),
         "average_precision": average_precision_score(
-            y_array, y_proba
+            y_array,
+            y_proba,
         ),
     }
 
     if verbose:
         print(f"\n{'=' * 50}")
-        print(f"{model_name} | Threshold: {threshold:.2f}")
+
+        print(
+            f"{model_name} | Threshold: {threshold:.2f}"
+        )
+
         print("=" * 50)
 
         for key, value in metrics.items():
@@ -382,7 +562,9 @@ def save_training_history(
         exist_ok=True,
     )
 
-    history_df = pd.DataFrame(history.history)
+    history_df = pd.DataFrame(
+        history.history
+    )
 
     history_df.insert(
         0,
@@ -411,7 +593,9 @@ def plot_learning_curves(
         exist_ok=True,
     )
 
-    history_df = pd.DataFrame(history.history)
+    history_df = pd.DataFrame(
+        history.history
+    )
 
     epochs = np.arange(
         1,
@@ -419,7 +603,7 @@ def plot_learning_curves(
     )
 
     metrics = [
-        ("loss", "Binary Cross-Entropy Loss"),
+        ("loss", "Training Objective Loss"),
         ("accuracy", "Accuracy"),
         ("roc_auc", "ROC-AUC"),
         ("pr_auc", "PR-AUC"),
@@ -454,7 +638,7 @@ def plot_learning_curves(
         ax.grid(alpha=0.3)
 
     fig.suptitle(
-        "TensorFlow ANN — Learning Curves",
+        "TensorFlow ANN - Learning Curves",
         fontsize=16,
     )
 
