@@ -1,0 +1,27 @@
+{
+    "dataset_hash": "88be4b93fbe0cc83421af1c503794c97c342eca914c1576db7c276e61d61358a",
+    "predictions_hash": "ada006e7e6e78a267a769f0f9ee01326aad5651073e875fb460071bc7ad731c3",
+    "validation_rows": 1409,
+    "models": [
+        "logistic_regression",
+        "xgboost",
+        "tensorflow_ann"
+    ],
+    "metrics": [
+        "accuracy",
+        "precision",
+        "recall",
+        "f1",
+        "roc_auc",
+        "average_precision"
+    ],
+    "n_bootstraps": 2000,
+    "confidence_level": 0.95,
+    "random_state": 42,
+    "classification_threshold": 0.5,
+    "sampling_method": "paired_stratified_bootstrap",
+    "interval_method": "percentile",
+    "multiple_comparison_adjustment": null,
+    "evaluation_partition": "validation",
+    "test_evaluated": false
+}
