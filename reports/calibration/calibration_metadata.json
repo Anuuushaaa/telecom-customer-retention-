@@ -1,0 +1,35 @@
+{
+    "dataset_hash": "88be4b93fbe0cc83421af1c503794c97c342eca914c1576db7c276e61d61358a",
+    "parameters_hash": "5dc25450cecbad2ac5e10d591adbd0fae06211d9c40a6ea3b8d794ce4c3f2c7b",
+    "oof_predictions_hash": "a1d09b0176455377571a45d9de11226a6b2ea7ddee3c3416da493f8680960cfa",
+    "validation_predictions_hash": "ada006e7e6e78a267a769f0f9ee01326aad5651073e875fb460071bc7ad731c3",
+    "random_state": 42,
+    "calibration_training_rows": 4225,
+    "validation_rows": 1409,
+    "oof_folds": 5,
+    "models": [
+        "logistic_regression",
+        "xgboost",
+        "tensorflow_ann"
+    ],
+    "calibration_methods": [
+        "uncalibrated",
+        "sigmoid",
+        "isotonic"
+    ],
+    "n_bins": 10,
+    "binning_strategy": "equal_width",
+    "sigmoid_input": "probability_log_odds",
+    "selection_metric": "brier_score",
+    "selection_tiebreakers": [
+        "log_loss",
+        "ece",
+        "calibration_method"
+    ],
+    "calibrator_fit_partition": "training_oof",
+    "evaluation_partition": "validation",
+    "nested_hyperparameter_selection": false,
+    "test_evaluated": false,
+    "production_updated": false,
+    "calibrated_predictions_hash": "a76f914a8412ca23876c7822b40ab79f071bff09b24f74d77dbb0a039b0b90d2"
+}
