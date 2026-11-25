@@ -1,0 +1,4 @@
+customer_group,customer_count,mean_monthly_charges,median_monthly_charges,mean_retained_contribution,total_retained_contribution
+all_customers,1409,65.39024130589071,70.9,313.8731582682754,442247.28
+churned_customers,374,75.81524064171123,80.925,363.9131550802139,136103.52000000002
+non_churned_customers,1035,61.62314009661836,64.55,295.79107246376816,306143.76000000007

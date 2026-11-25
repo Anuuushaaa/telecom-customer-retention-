@@ -1,0 +1,7 @@
+scenario,strategy,winning_model,winning_model_count,expected_net_profit,runner_up_expected_profit,profit_advantage,relative_profit_advantage,is_tie,no_intervention_preferred
+pessimistic,customer_value_targeting,no_intervention,0,0.0,0.0,0.0,,False,True
+pessimistic,budget_value_targeting,no_intervention,0,0.0,0.0,0.0,,False,True
+baseline,customer_value_targeting,xgboost,1,20264.426059250174,19800.493744748484,463.9323145016897,0.02343034070171783,False,False
+baseline,budget_value_targeting,xgboost,1,18750.647632051532,18636.68387681424,113.96375523729148,0.006115023251484828,False,False
+optimistic,customer_value_targeting,xgboost,1,124022.40404127171,122686.5744246814,1335.8296165903157,0.010888148298658348,False,False
+optimistic,budget_value_targeting,xgboost,1,120837.94201207806,119570.69635833072,1267.2456537473336,0.01059829617408632,False,False
