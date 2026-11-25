@@ -66,3 +66,7 @@ statsmodels==0.15.0
 tensorflow==2.20.0
 optuna==5.1.0
 mlflow==3.18.0
+fastapi==0.165.0
+uvicorn==0.54.0
+pydantic==2.14.4
+httpx==0.28.1
