@@ -1,0 +1,35 @@
+{
+    "packaging_schema_version": "1",
+    "dataset_hash": "88be4b93fbe0cc83421af1c503794c97c342eca914c1576db7c276e61d61358a",
+    "packaged_models": [
+        "logistic_regression",
+        "xgboost",
+        "tensorflow_ann"
+    ],
+    "total_models": 3,
+    "total_verified_predictions": 4227,
+    "evaluation_partition": "validation",
+    "serialization_verified": true,
+    "threshold_override_verified": true,
+    "training_repeated": false,
+    "models_registered": false,
+    "production_updated": false,
+    "test_evaluated": false,
+    "runtime_requirements": [
+        "mlflow==3.18.0",
+        "cloudpickle==3.1.2",
+        "joblib==1.4.2",
+        "numpy==2.1.3",
+        "pandas==2.2.3",
+        "scipy==1.18.1",
+        "scikit-learn==1.8.0",
+        "xgboost==3.4.1",
+        "tensorflow==2.20.0",
+        "keras==3.15.1",
+        "optuna==5.1.0",
+        "matplotlib==3.10.0",
+        "statsmodels==0.15.0",
+        "protobuf==5.29.6",
+        "pyarrow==25.0.0"
+    ]
+}

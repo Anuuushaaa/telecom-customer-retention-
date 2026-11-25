@@ -1,0 +1,57 @@
+{
+    "promotion_schema_version": "1",
+    "timestamp_utc": "2026-11-25T19:02:48.918612+00:00",
+    "registered_model_name": "telecom-churn-classifier",
+    "dataset_hash": "88be4b93fbe0cc83421af1c503794c97c342eca914c1576db7c276e61d61358a",
+    "selection_objective": "budget_constrained_expected_net_profit",
+    "ranking_criteria": [
+        "expected_net_profit_descending",
+        "validation_roc_auc_descending",
+        "brier_score_ascending",
+        "model_name_ascending"
+    ],
+    "previous_aliases": {
+        "champion": null,
+        "challenger": null
+    },
+    "assigned_aliases": {
+        "champion": "2",
+        "challenger": "1"
+    },
+    "champion_model": "xgboost",
+    "challenger_model": "logistic_regression",
+    "expected_profit_difference": 113.96375523728784,
+    "financial_results": "hypothetical_simulation",
+    "evaluation_partition": "validation",
+    "statistical_superiority_established": false,
+    "alias_verification": [
+        {
+            "alias": "champion",
+            "model": "xgboost",
+            "version": "2",
+            "model_uri": "models:/telecom-churn-classifier@champion",
+            "verified_rows": 1409,
+            "maximum_raw_probability_error": 2.977447510765785e-08,
+            "maximum_calibrated_probability_error": 5.859336837943374e-08,
+            "classification_verified": true,
+            "threshold_override_verified": true,
+            "serialization_verified": true
+        },
+        {
+            "alias": "challenger",
+            "model": "logistic_regression",
+            "version": "1",
+            "model_uri": "models:/telecom-churn-classifier@challenger",
+            "verified_rows": 1409,
+            "maximum_raw_probability_error": 1.1102230246251565e-16,
+            "maximum_calibrated_probability_error": 3.3306690738754696e-16,
+            "classification_verified": true,
+            "threshold_override_verified": true,
+            "serialization_verified": true
+        }
+    ],
+    "registry_aliases_updated": true,
+    "local_production_files_updated": false,
+    "training_repeated": false,
+    "test_evaluated": false
+}

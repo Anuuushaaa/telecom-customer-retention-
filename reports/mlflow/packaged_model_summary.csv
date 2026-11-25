@@ -1,0 +1,4 @@
+model,variant,run_id,model_uri,model_id,calibration_method,classification_threshold,verified_rows,maximum_raw_probability_error,maximum_calibrated_probability_error,classification_verified,threshold_override_verified,serialization_verified
+logistic_regression,optimized,5895307f02fa49bc93644695d094094c,models:/m-06a6782b83a342959b05394ccbd5d1cf,m-06a6782b83a342959b05394ccbd5d1cf,sigmoid,0.5,1409,1.1102230246251565e-16,3.3306690738754696e-16,True,True,True
+xgboost,optimized,1121b4c5e9ec41c2a3fd5d9f7c8d2ff1,models:/m-5efb21e7c0524338b17114bb681957a1,m-5efb21e7c0524338b17114bb681957a1,sigmoid,0.5,1409,2.977447510765785e-08,5.859336837943374e-08,True,True,True
+tensorflow_ann,optimized,913dab65f88f465dbb2ff9ae8d185e5e,models:/m-983d15914fd04b949bfa716c7b917864,m-983d15914fd04b949bfa716c7b917864,sigmoid,0.5,1409,2.979812618875144e-08,6.376147909659124e-08,True,True,True
