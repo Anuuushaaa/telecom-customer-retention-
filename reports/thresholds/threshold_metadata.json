@@ -1,0 +1,35 @@
+{
+    "dataset_hash": "88be4b93fbe0cc83421af1c503794c97c342eca914c1576db7c276e61d61358a",
+    "calibrated_predictions_hash": "a76f914a8412ca23876c7822b40ab79f071bff09b24f74d77dbb0a039b0b90d2",
+    "selected_calibration_methods_hash": "592a54cf1afa5c30991791ec52f096a22314f5b93ecb235db448e29a68508bce",
+    "validation_rows": 1409,
+    "models": [
+        "logistic_regression",
+        "xgboost",
+        "tensorflow_ann"
+    ],
+    "calibration_methods": [
+        "uncalibrated",
+        "sigmoid",
+        "isotonic"
+    ],
+    "threshold_min": 0.01,
+    "threshold_max": 0.99,
+    "threshold_step": 0.01,
+    "threshold_count": 99,
+    "recall_targets": [
+        0.8,
+        0.9
+    ],
+    "selection_strategies": [
+        "maximum_f1",
+        "maximum_f2",
+        "maximum_youden_j",
+        "recall_at_least_80",
+        "recall_at_least_90"
+    ],
+    "evaluation_partition": "validation",
+    "business_cost_optimization": false,
+    "test_evaluated": false,
+    "production_updated": false
+}

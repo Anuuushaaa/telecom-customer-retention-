@@ -1,0 +1,21 @@
+{
+    "dataset_hash": "88be4b93fbe0cc83421af1c503794c97c342eca914c1576db7c276e61d61358a",
+    "parameters_hash": "5dc25450cecbad2ac5e10d591adbd0fae06211d9c40a6ea3b8d794ce4c3f2c7b",
+    "random_state": 42,
+    "n_splits": 5,
+    "training_rows": 4225,
+    "validation_rows": 1409,
+    "test_rows": 1409,
+    "oof_rows": 4225,
+    "models": [
+        "logistic_regression",
+        "xgboost",
+        "tensorflow_ann"
+    ],
+    "sampling_method": "stratified_kfold",
+    "hyperparameter_source": "completed_optuna_studies",
+    "smoke_test": false,
+    "validation_evaluated": false,
+    "test_evaluated": false,
+    "oof_predictions_hash": "a1d09b0176455377571a45d9de11226a6b2ea7ddee3c3416da493f8680960cfa"
+}
