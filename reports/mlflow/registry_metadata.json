@@ -1,0 +1,19 @@
+{
+    "registry_schema_version": "1",
+    "registered_model_name": "telecom-churn-classifier",
+    "dataset_hash": "88be4b93fbe0cc83421af1c503794c97c342eca914c1576db7c276e61d61358a",
+    "total_registered_candidates": 3,
+    "total_verified_predictions": 4227,
+    "model_versions": {
+        "logistic_regression": "1",
+        "xgboost": "2",
+        "tensorflow_ann": "3"
+    },
+    "evaluation_partition": "validation",
+    "registry_verification": true,
+    "training_repeated": false,
+    "test_evaluated": false,
+    "aliases_assigned_by_registry_step": false,
+    "production_updated": false,
+    "financial_results": "hypothetical_simulation"
+}

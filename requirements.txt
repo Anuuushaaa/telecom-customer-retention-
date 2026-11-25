@@ -65,3 +65,4 @@ xgboost
 statsmodels==0.15.0
 tensorflow==2.20.0
 optuna==5.1.0
+mlflow==3.18.0

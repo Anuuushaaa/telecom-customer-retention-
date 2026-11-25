@@ -1,0 +1,4 @@
+rank,model,version,assigned_role,calibration_method,classification_threshold,validation_roc_auc,validation_f1,brier_score,expected_net_profit
+1,xgboost,2,champion,sigmoid,0.5,0.8397065281975769,0.6200417536534447,0.137156213049172,18750.64763205153
+2,logistic_regression,1,challenger,sigmoid,0.5,0.8388165542897,0.6234042553191489,0.137163489172382,18636.68387681424
+3,tensorflow_ann,3,candidate,sigmoid,0.5,0.8351352398666977,0.6174496644295302,0.1388005803065617,17766.756942376334

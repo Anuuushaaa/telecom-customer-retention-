@@ -1,0 +1,30 @@
+{
+    "tracking_schema_version": "1",
+    "dataset_hash": "88be4b93fbe0cc83421af1c503794c97c342eca914c1576db7c276e61d61358a",
+    "models": [
+        "logistic_regression",
+        "xgboost",
+        "tensorflow_ann"
+    ],
+    "variants": [
+        "baseline",
+        "optimized"
+    ],
+    "total_candidate_runs": 6,
+    "evaluation_partition": "validation",
+    "training_repeated": false,
+    "test_evaluated_in_tracking": false,
+    "production_updated": false,
+    "financial_results": "hypothetical_simulation",
+    "environment": {
+        "python": "3.13.12",
+        "mlflow": "3.18.0",
+        "numpy": "2.1.3",
+        "pandas": "2.2.3",
+        "scikit_learn": "1.8.0",
+        "tensorflow": "2.20.0",
+        "xgboost": "3.4.1",
+        "optuna": "5.1.0",
+        "joblib": "1.4.2"
+    }
+}

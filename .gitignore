@@ -51,3 +51,11 @@ Thumbs.db
 
 # Environment variables
 .env
+# MLflow runtime storage
+mlflow_store/
+mlruns/
+mlartifacts/
+mlflow.db
+mlflow.db-journal
+mlflow.db-wal
+mlflow.db-shm
