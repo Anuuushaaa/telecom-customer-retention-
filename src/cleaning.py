@@ -1,17 +1,17 @@
+
 """
-src/cleaning.py
+Reusable data cleaning for Telecom Customer Retention.
 
-Reusable data cleaning for the Telecom Customer Retention project.
-This function encodes every cleaning decision made in Phase 2/3:
-
-1. TotalCharges: convert text -> numeric, fill 11 blank (zero-tenure) rows with 0
-2. Collapse "No internet service" -> "No" across 6 internet-dependent columns
-3. Collapse "No phone service" -> "No" in MultipleLines
-4. customerID is NOT dropped here — it's kept for lookup purposes.
-   Feature-selection (excluding it from the model matrix) happens later,
-   at train/predict time, not in cleaning.
+Cleaning rules:
+1. Convert TotalCharges to numeric.
+2. Fill legitimate blank charges for zero-tenure customers.
+3. Reject invalid, negative or non-finite charges.
+4. Normalize internet-dependent service categories.
+5. Normalize phone-dependent service categories.
+6. Preserve customer IDs and input row count.
 """
 
+import numpy as np
 import pandas as pd
 
 
@@ -26,38 +26,68 @@ INTERNET_DEPENDENT_COLS = [
 
 
 def clean_data(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Apply all Phase 3 cleaning steps to a raw Telco churn dataframe.
+    """Clean raw telecom customer records without modifying the input."""
 
-    Parameters
-    ----------
-    df : pd.DataFrame
-        Raw dataframe, as loaded directly from the source CSV.
-
-    Returns
-    -------
-    pd.DataFrame
-        Cleaned dataframe. Same number of rows as input; no rows dropped.
-    """
     df = df.copy()
 
-    # --- 1. TotalCharges: text -> numeric ---
-    # Blank strings become NaN on coercion; those 11 rows are all
-    # tenure == 0 customers (verified in Phase 2), so filling with 0
-    # is a substantive claim ("no completed billing cycle yet"),
-    # not a blind fillna.
-    df["TotalCharges"] = pd.to_numeric(df["TotalCharges"], errors="coerce")
-    df["TotalCharges"] = df["TotalCharges"].fillna(0)
+    # Validate and convert TotalCharges.
+    raw_charges = df["TotalCharges"]
 
-    # --- 2. Collapse "No internet service" -> "No" ---
-    # These 6 columns are perfectly redundant with InternetService == "No".
-    # Collapsing removes multicollinearity and prevents SHAP from diluting
-    # the "no internet" effect across 6 features.
+    blank_charges = (
+        raw_charges.isna()
+        | raw_charges.astype(str).str.strip().eq("")
+    )
+
+    numeric_charges = pd.to_numeric(
+        raw_charges,
+        errors="coerce",
+    )
+
+    # Only blank charges for zero-tenure customers
+    # are eligible for replacement with zero.
+    valid_zero_tenure = (
+        blank_charges & df["tenure"].eq(0)
+    )
+
+    invalid_charges = (
+        numeric_charges.isna()
+        & ~valid_zero_tenure
+    )
+
+    if invalid_charges.any():
+        raise ValueError(
+            f"Invalid TotalCharges in "
+            f"{invalid_charges.sum()} record(s)."
+        )
+
+    numeric_charges = numeric_charges.mask(
+        valid_zero_tenure,
+        0.0,
+    )
+
+    if not np.isfinite(numeric_charges).all():
+        raise ValueError(
+            "TotalCharges contains non-finite values."
+        )
+
+    if (numeric_charges < 0).any():
+        raise ValueError(
+            "TotalCharges cannot be negative."
+        )
+
+    df["TotalCharges"] = numeric_charges.astype(float)
+
+    # Normalize internet-dependent service categories.
     for col in INTERNET_DEPENDENT_COLS:
-        df[col] = df[col].replace("No internet service", "No")
+        df[col] = df[col].replace(
+            "No internet service",
+            "No",
+        )
 
-    # --- 3. Collapse "No phone service" -> "No" in MultipleLines ---
-    # Same logic, redundant with PhoneService == "No".
-    df["MultipleLines"] = df["MultipleLines"].replace("No phone service", "No")
+    # Normalize phone-dependent service categories.
+    df["MultipleLines"] = df["MultipleLines"].replace(
+        "No phone service",
+        "No",
+    )
 
     return df

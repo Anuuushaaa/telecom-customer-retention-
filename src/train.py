@@ -29,9 +29,9 @@ from sklearn.metrics import (
 )
 from xgboost import XGBClassifier
 
-from src.cleaning import clean_data
 from src.preprocessing import (
     fit_transform_features,
+    prepare_raw_data,
     split_train_validation_test,
 )
 
@@ -120,7 +120,8 @@ def evaluate_model(
 def main():
     # Load and clean the original dataset
     df_raw = pd.read_csv("data/raw/telco_churn.csv")
-    df_clean = clean_data(df_raw)
+    df_clean = prepare_raw_data(df_raw, require_target=True)
+    print("Training data validation passed.")
 
     # Stratified 60/20/20 split
     train_df, val_df, test_df = split_train_validation_test(

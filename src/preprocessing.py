@@ -18,6 +18,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
 from src.feature_engineering import engineer_features
+from src.cleaning import clean_data
+from src.validation import REQUIRED_FEATURES, validate_raw_data
 
 
 CONTRACT_ORDER = {
@@ -72,6 +74,19 @@ class PreprocessedData:
     X_val: pd.DataFrame | None = None
     y_val: pd.Series | None = None
     customer_ids_val: pd.Series | None = None
+
+
+def prepare_raw_data(
+    df: pd.DataFrame,
+    require_target: bool = True,
+) -> pd.DataFrame:
+    """Validate raw records, normalize numeric types and clean data."""
+    validate_raw_data(df, require_target=require_target)
+    allowed = set(REQUIRED_FEATURES) | {"customerID", "Churn"}
+    df = df.loc[:, [col for col in df.columns if col in allowed]].copy()
+    for col in ["SeniorCitizen", "tenure", "MonthlyCharges"]:
+        df[col] = pd.to_numeric(df[col], errors="raise")
+    return clean_data(df)
 
 
 def _prepare_for_split(df: pd.DataFrame) -> pd.DataFrame:
@@ -184,95 +199,62 @@ def _encode_categoricals(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def transform_features(
+    df: pd.DataFrame,
+    scaler: StandardScaler,
+    feature_columns: list,
+) -> pd.DataFrame:
+    """Apply fitted preprocessing to cleaned, engineered records."""
+    encoded = _encode_categoricals(df)
+    X = encoded.drop(columns=["Churn", "customerID"], errors="ignore").copy()
+    missing = set(feature_columns) - set(X.columns)
+    unexpected_missing = {
+        col for col in missing
+        if not any(col.startswith(f"{nominal}_") for nominal in NOMINAL_ONEHOT_COLS)
+    }
+    if unexpected_missing:
+        raise ValueError(f"Missing model features: {sorted(unexpected_missing)}")
+    X = X.reindex(columns=feature_columns, fill_value=0)
+    X[NUMERIC_COLS] = scaler.transform(X[NUMERIC_COLS])
+    if X.isna().any().any():
+        raise ValueError("Missing values detected after preprocessing.")
+    return X
+
+
 def fit_transform_features(
     train_df: pd.DataFrame,
     test_df: pd.DataFrame,
     val_df: pd.DataFrame | None = None,
 ) -> PreprocessedData:
-    """
-    Fit preprocessing on training data only.
-
-    Existing usage:
-        fit_transform_features(train_df, test_df)
-
-    New usage:
-        fit_transform_features(train_df, test_df, val_df=val_df)
-
-    The validation and test datasets are transformed using
-    the feature columns and scaler learned from training data.
-    """
+    """Fit on training data only and share transformations across splits."""
     train_encoded = _encode_categoricals(train_df)
-    test_encoded = _encode_categoricals(test_df)
-
-    if val_df is not None:
-        val_encoded = _encode_categoricals(val_df)
-    else:
-        val_encoded = None
-
-    # Training columns define the feature schema.
-    # Missing one-hot columns in other splits are filled with zero.
-    test_encoded = test_encoded.reindex(
-        columns=train_encoded.columns,
-        fill_value=0,
-    )
-
-    if val_encoded is not None:
-        val_encoded = val_encoded.reindex(
-            columns=train_encoded.columns,
-            fill_value=0,
-        )
-
-    # Separate labels
-    y_train = train_encoded["Churn"]
-    y_test = test_encoded["Churn"]
-
-    # Preserve customer IDs
-    customer_ids_train = train_encoded["customerID"]
-    customer_ids_test = test_encoded["customerID"]
-
-    drop_cols = ["Churn", "customerID"]
-
-    # Separate model features
-    X_train = train_encoded.drop(columns=drop_cols).copy()
-    X_test = test_encoded.drop(columns=drop_cols).copy()
-
-    # Fit scaler on training data ONLY
+    feature_columns = [
+        col for col in train_encoded.columns
+        if col not in ["Churn", "customerID"]
+    ]
     scaler = StandardScaler()
+    scaler.fit(train_encoded[NUMERIC_COLS])
 
-    X_train[NUMERIC_COLS] = scaler.fit_transform(
-        X_train[NUMERIC_COLS]
-    )
-
-    X_test[NUMERIC_COLS] = scaler.transform(
-        X_test[NUMERIC_COLS]
-    )
-
-    # Optional validation preprocessing
+    X_train = transform_features(train_df, scaler, feature_columns)
+    X_test = transform_features(test_df, scaler, feature_columns)
     X_val = None
     y_val = None
     customer_ids_val = None
 
-    if val_encoded is not None:
-        y_val = val_encoded["Churn"]
-        customer_ids_val = val_encoded["customerID"]
-
-        X_val = val_encoded.drop(
-            columns=drop_cols
-        ).copy()
-
-        X_val[NUMERIC_COLS] = scaler.transform(
-            X_val[NUMERIC_COLS]
-        )
+    if val_df is not None:
+        X_val = transform_features(val_df, scaler, feature_columns)
+        y_val = val_df["Churn"]
+        customer_ids_val = val_df["customerID"]
 
     return PreprocessedData(
         X_train=X_train,
         X_test=X_test,
-        y_train=y_train,
-        y_test=y_test,
-        customer_ids_train=customer_ids_train,
-        customer_ids_test=customer_ids_test,
+        y_train=train_df["Churn"],
+        y_test=test_df["Churn"],
+        customer_ids_train=train_df["customerID"],
+        customer_ids_test=test_df["customerID"],
         scaler=scaler,
-        feature_columns=list(X_train.columns),
+        feature_columns=feature_columns,
         X_val=X_val,
         y_val=y_val,
         customer_ids_val=customer_ids_val,

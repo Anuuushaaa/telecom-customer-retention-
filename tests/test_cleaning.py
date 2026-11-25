@@ -1,73 +1,117 @@
-"""
-tests/test_cleaning.py
 
-Unit tests for src/cleaning.py — verifies every Phase 3 cleaning decision
-holds on a small, hand-built dataframe (not the full dataset, so tests
-stay fast and the expected values are easy to eyeball).
-"""
+"""Data cleaning tests using the original Telco dataset."""
 
+import numpy as np
 import pandas as pd
-from src.cleaning import clean_data
+import pytest
+
+from src.cleaning import (
+    clean_data,
+    INTERNET_DEPENDENT_COLS,
+)
 
 
-def _sample_raw_df():
-    """A tiny raw dataframe covering every edge case cleaning must handle."""
-    return pd.DataFrame({
-        "customerID": ["0001", "0002", "0003"],
-        "tenure": [0, 5, 12],
-        "TotalCharges": [" ", "150.5", "600.0"],  # blank string = zero-tenure case
-        "InternetService": ["No", "DSL", "Fiber optic"],
-        "OnlineSecurity": ["No internet service", "Yes", "No"],
-        "OnlineBackup": ["No internet service", "No", "Yes"],
-        "DeviceProtection": ["No internet service", "Yes", "No"],
-        "TechSupport": ["No internet service", "No", "No"],
-        "StreamingTV": ["No internet service", "Yes", "Yes"],
-        "StreamingMovies": ["No internet service", "No", "Yes"],
-        "PhoneService": ["Yes", "No", "Yes"],
-        "MultipleLines": ["No", "No phone service", "Yes"],
-    })
+@pytest.fixture(scope="module")
+def raw_data():
+    return pd.read_csv("data/raw/telco_churn.csv")
 
 
-def test_total_charges_converted_to_numeric():
-    df = clean_data(_sample_raw_df())
-    assert df["TotalCharges"].dtype.kind == "f"  # float
+@pytest.fixture(scope="module")
+def cleaned_data(raw_data):
+    return clean_data(raw_data)
 
 
-def test_total_charges_blank_filled_with_zero_for_zero_tenure():
-    df = clean_data(_sample_raw_df())
-    # row 0 has tenure == 0 and blank TotalCharges -> should become 0.0
-    assert df.loc[0, "TotalCharges"] == 0.0
+def test_total_charges_converted_to_numeric(cleaned_data):
+    assert cleaned_data["TotalCharges"].dtype.kind == "f"
 
 
-def test_total_charges_no_nans_remain():
-    df = clean_data(_sample_raw_df())
-    assert df["TotalCharges"].isna().sum() == 0
+def test_total_charges_blank_filled_with_zero_for_zero_tenure(
+    raw_data, cleaned_data
+):
+    blank = (
+        raw_data["TotalCharges"].isna()
+        | raw_data["TotalCharges"].astype(str).str.strip().eq("")
+    )
+
+    mask = blank & raw_data["tenure"].eq(0)
+
+    assert mask.any()
+    assert cleaned_data.loc[mask, "TotalCharges"].eq(0).all()
 
 
-def test_no_internet_service_collapsed_to_no():
-    df = clean_data(_sample_raw_df())
-    internet_cols = [
-        "OnlineSecurity", "OnlineBackup", "DeviceProtection",
-        "TechSupport", "StreamingTV", "StreamingMovies",
-    ]
-    for col in internet_cols:
-        assert "No internet service" not in df[col].values
-        # row 0 originally had "No internet service" -> should now be "No"
-        assert df.loc[0, col] == "No"
+def test_total_charges_no_nans_remain(cleaned_data):
+    assert cleaned_data["TotalCharges"].isna().sum() == 0
 
 
-def test_no_phone_service_collapsed_to_no():
-    df = clean_data(_sample_raw_df())
-    assert "No phone service" not in df["MultipleLines"].values
-    assert df.loc[1, "MultipleLines"] == "No"
+def test_no_internet_service_collapsed_to_no(
+    raw_data, cleaned_data
+):
+    for column in INTERNET_DEPENDENT_COLS:
+        mask = raw_data[column].eq("No internet service")
+
+        assert mask.any()
+        assert cleaned_data.loc[mask, column].eq("No").all()
+
+        assert "No internet service" not in (
+            cleaned_data[column].values
+        )
 
 
-def test_row_count_unchanged():
-    raw = _sample_raw_df()
-    df = clean_data(raw)
-    assert len(df) == len(raw)
+def test_no_phone_service_collapsed_to_no(
+    raw_data, cleaned_data
+):
+    mask = raw_data["MultipleLines"].eq("No phone service")
+
+    assert mask.any()
+
+    assert cleaned_data.loc[
+        mask, "MultipleLines"
+    ].eq("No").all()
+
+    assert "No phone service" not in (
+        cleaned_data["MultipleLines"].values
+    )
 
 
-def test_customer_id_not_dropped():
-    df = clean_data(_sample_raw_df())
-    assert "customerID" in df.columns
+def test_row_count_unchanged(raw_data, cleaned_data):
+    assert len(raw_data) == len(cleaned_data)
+
+
+def test_customer_ids_preserved(raw_data, cleaned_data):
+    pd.testing.assert_series_equal(
+        raw_data["customerID"],
+        cleaned_data["customerID"],
+    )
+
+
+def test_cleaning_does_not_modify_original(raw_data):
+    original = raw_data.copy(deep=True)
+
+    clean_data(raw_data)
+
+    pd.testing.assert_frame_equal(
+        raw_data,
+        original,
+    )
+
+
+@pytest.mark.parametrize(
+    "invalid_value",
+    [
+        "invalid",
+        -100.0,
+        np.inf,
+        " ",
+    ],
+)
+def test_invalid_total_charges_rejected(
+    raw_data, invalid_value
+):
+    df = raw_data.loc[
+        raw_data["tenure"].gt(0)
+    ].iloc[[0]].copy()
+
+    df["TotalCharges"] = invalid_value
+
+    with pytest.raises(ValueError, match="TotalCharges"):
+        clean_data(df)

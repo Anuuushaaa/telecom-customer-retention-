@@ -12,48 +12,8 @@ Streamlit app.
 import joblib
 import pandas as pd
 from src.feature_engineering import engineer_features
-from src.cleaning import clean_data
 from src.config import CLASSIFICATION_THRESHOLD, PRODUCTION_MODEL_PATH
-from src.preprocessing import (
-    BINARY_YES_NO_COLS,
-    CONTRACT_ORDER,
-    NOMINAL_ONEHOT_COLS,
-    NUMERIC_COLS,
-)
-
-
-def _encode_single_customer(df: pd.DataFrame, feature_columns: list, scaler) -> pd.DataFrame:
-    """
-    Mirrors src.preprocessing._encode_categoricals + the scaling step in
-    fit_transform_features, but for a SINGLE new row using an ALREADY
-    FITTED scaler. Never calls scaler.fit() — only scaler.transform().
-    """
-    df = df.copy()
-
-    # Ordinal
-    df["Contract"] = df["Contract"].map(CONTRACT_ORDER)
-
-    # Binary Yes/No -> 1/0
-    for col in BINARY_YES_NO_COLS:
-        df[col] = df[col].map({"Yes": 1, "No": 0})
-
-    # Nominal -> one-hot
-    df = pd.get_dummies(df, columns=NOMINAL_ONEHOT_COLS, drop_first=False)
-
-    # Drop columns not used as features (customerID, Churn if present)
-    for col in ["customerID", "Churn"]:
-        if col in df.columns:
-            df = df.drop(columns=[col])
-
-    # Align to the EXACT training feature columns — same technique as
-    # Phase 4's train/test alignment. Any column the new customer doesn't
-    # have (e.g. a category not present in this single row) gets 0.
-    df = df.reindex(columns=feature_columns, fill_value=0)
-
-    # Scale numeric columns using the FITTED scaler (transform only)
-    df[NUMERIC_COLS] = scaler.transform(df[NUMERIC_COLS])
-
-    return df
+from src.preprocessing import prepare_raw_data, transform_features
 
 
 def predict_customer(raw_customer: dict) -> dict:
@@ -67,9 +27,9 @@ def predict_customer(raw_customer: dict) -> dict:
     explainer = joblib.load("models/shap_explainer.pkl")
 
     df_raw = pd.DataFrame([raw_customer])
-    df_clean = clean_data(df_raw)
+    df_clean = prepare_raw_data(df_raw, require_target=False)
     df_engineered = engineer_features(df_clean)
-    X = _encode_single_customer(df_engineered, feature_columns, scaler)
+    X = transform_features(df_engineered, scaler, feature_columns)
 
     proba = model.predict_proba(X)[0, 1]
     prediction = int(proba >= CLASSIFICATION_THRESHOLD)
