@@ -1,12 +1,14 @@
 # Virtual environment
 venv/
 env/
+.venv/
 *.venv
 
 # Python cache
 __pycache__/
 *.pyc
 *.pyo
+.pytest_cache/
 
 # Jupyter checkpoints
 .ipynb_checkpoints/
@@ -21,6 +23,20 @@ data/processed/*
 models/*.pkl
 models/*.joblib
 models/*.h5
+models/*.keras
+
+# Local backup and candidate models
+models/backup/
+models/candidates/
+
+# Optuna local database storage
+reports/optimization/*.db
+reports/optimization/*.db-journal
+reports/optimization/*.db-wal
+reports/optimization/*.db-shm
+
+# Temporary smoke-test artifacts
+reports/optimization/smoke/
 
 # Streamlit
 .streamlit/secrets.toml
