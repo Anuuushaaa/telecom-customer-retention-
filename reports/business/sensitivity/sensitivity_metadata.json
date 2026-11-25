@@ -1,0 +1,125 @@
+{
+    "dataset_hash": "88be4b93fbe0cc83421af1c503794c97c342eca914c1576db7c276e61d61358a",
+    "calibrated_predictions_hash": "a76f914a8412ca23876c7822b40ab79f071bff09b24f74d77dbb0a039b0b90d2",
+    "validation_rows": 1409,
+    "models": [
+        "logistic_regression",
+        "xgboost",
+        "tensorflow_ann"
+    ],
+    "selected_calibration_methods": {
+        "logistic_regression": "sigmoid",
+        "xgboost": "sigmoid",
+        "tensorflow_ann": "sigmoid"
+    },
+    "baseline_configuration": {
+        "contact_cost": 5.0,
+        "incentive_cost": 20.0,
+        "retention_success_rate": 0.3,
+        "retention_months": 12,
+        "contribution_margin": 0.4,
+        "campaign_budget": 10000.0,
+        "currency": "USD",
+        "intervention_cost": 25.0,
+        "maximum_budget_targets": 400,
+        "retained_value_multiplier": 4.800000000000001,
+        "assumption_type": "hypothetical_simulation"
+    },
+    "one_way_parameters": {
+        "contact_cost": [
+            2.0,
+            5.0,
+            10.0
+        ],
+        "incentive_cost": [
+            5.0,
+            10.0,
+            20.0,
+            30.0,
+            50.0
+        ],
+        "retention_success_rate": [
+            0.1,
+            0.2,
+            0.3,
+            0.4,
+            0.5,
+            0.6
+        ],
+        "retention_months": [
+            3,
+            6,
+            12,
+            18,
+            24
+        ],
+        "contribution_margin": [
+            0.2,
+            0.3,
+            0.4,
+            0.5,
+            0.6
+        ],
+        "campaign_budget": [
+            2500.0,
+            5000.0,
+            10000.0,
+            15000.0,
+            20000.0
+        ]
+    },
+    "one_way_scenarios": 29,
+    "two_way_scenarios": 30,
+    "named_scenarios": {
+        "pessimistic": {
+            "contact_cost": 10.0,
+            "incentive_cost": 30.0,
+            "retention_success_rate": 0.15,
+            "retention_months": 6,
+            "contribution_margin": 0.25,
+            "campaign_budget": 10000.0,
+            "currency": "USD",
+            "intervention_cost": 40.0,
+            "maximum_budget_targets": 250,
+            "retained_value_multiplier": 1.5,
+            "assumption_type": "hypothetical_simulation"
+        },
+        "baseline": {
+            "contact_cost": 5.0,
+            "incentive_cost": 20.0,
+            "retention_success_rate": 0.3,
+            "retention_months": 12,
+            "contribution_margin": 0.4,
+            "campaign_budget": 10000.0,
+            "currency": "USD",
+            "intervention_cost": 25.0,
+            "maximum_budget_targets": 400,
+            "retained_value_multiplier": 4.800000000000001,
+            "assumption_type": "hypothetical_simulation"
+        },
+        "optimistic": {
+            "contact_cost": 3.0,
+            "incentive_cost": 10.0,
+            "retention_success_rate": 0.5,
+            "retention_months": 18,
+            "contribution_margin": 0.55,
+            "campaign_budget": 10000.0,
+            "currency": "USD",
+            "intervention_cost": 13.0,
+            "maximum_budget_targets": 769,
+            "retained_value_multiplier": 9.9,
+            "assumption_type": "hypothetical_simulation"
+        }
+    },
+    "one_way_evaluations": 174,
+    "two_way_evaluations": 180,
+    "named_scenario_evaluations": 18,
+    "selection_objective": "expected_net_profit",
+    "financial_assumptions": "hypothetical_simulation",
+    "scenario_win_rates": "descriptive_not_probabilistic",
+    "baseline_consistency_verified": true,
+    "causal_intervention_effect_estimated": false,
+    "evaluation_partition": "validation",
+    "test_evaluated": false,
+    "production_updated": false
+}

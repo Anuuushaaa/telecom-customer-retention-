@@ -1,0 +1,13 @@
+{
+    "contact_cost": 5.0,
+    "incentive_cost": 20.0,
+    "retention_success_rate": 0.3,
+    "retention_months": 12,
+    "contribution_margin": 0.4,
+    "campaign_budget": 10000.0,
+    "currency": "USD",
+    "intervention_cost": 25.0,
+    "maximum_budget_targets": 400,
+    "retained_value_multiplier": 4.800000000000001,
+    "assumption_type": "hypothetical_simulation"
+}

@@ -1,0 +1,28 @@
+{
+    "dataset_hash": "88be4b93fbe0cc83421af1c503794c97c342eca914c1576db7c276e61d61358a",
+    "calibrated_predictions_hash": "a76f914a8412ca23876c7822b40ab79f071bff09b24f74d77dbb0a039b0b90d2",
+    "selected_calibration_methods_hash": "592a54cf1afa5c30991791ec52f096a22314f5b93ecb235db448e29a68508bce",
+    "selected_thresholds_hash": "ba46161fd3b0e0ae0f63f68541f3a961fcd3c5f11a933fe16ebbea7c0be5fdcd",
+    "validation_rows": 1409,
+    "models": [
+        "logistic_regression",
+        "xgboost",
+        "tensorflow_ann"
+    ],
+    "selected_calibration_methods": {
+        "logistic_regression": "sigmoid",
+        "xgboost": "sigmoid",
+        "tensorflow_ann": "sigmoid"
+    },
+    "threshold_count": 99,
+    "campaign_strategy_evaluations": 36,
+    "business_threshold_evaluations": 297,
+    "selection_objective": "expected_net_profit",
+    "evaluation_partition": "validation",
+    "financial_assumptions": "hypothetical_simulation",
+    "customer_value_source": "original_monthly_charges",
+    "intervention_cost_structure": "constant_cost_per_target",
+    "causal_intervention_effect_estimated": false,
+    "test_evaluated": false,
+    "production_updated": false
+}
