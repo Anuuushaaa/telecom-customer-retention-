@@ -1,0 +1,35 @@
+FROM python:3.13.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    TF_CPP_MIN_LOG_LEVEL=2 \
+    OMP_NUM_THREADS=2 \
+    TF_NUM_INTRAOP_THREADS=2 \
+    TF_NUM_INTEROP_THREADS=2
+
+WORKDIR /app
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    libgomp1 && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY requirements-api.txt .
+COPY requirements-frontend.txt .
+
+RUN python -m pip install --upgrade pip && \
+    python -m pip install -r requirements-frontend.txt && \
+    python -m pip check
+
+COPY app.py .
+COPY frontend/ ./frontend/
+COPY src/ ./src/
+COPY api/ ./api/
+COPY reports/shap/ ./reports/shap/
+
+RUN mkdir -p /app/data/raw
+
+EXPOSE 8501
+
+CMD ["python", "-m", "streamlit", "run", "app.py", "--server.address=0.0.0.0", "--server.port=8501", "--server.headless=true"]
