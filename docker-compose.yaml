@@ -1,0 +1,119 @@
+name: telecom-customer-retention
+
+services:
+
+  mlflow:
+    build:
+      context: .
+      dockerfile: Dockerfile.mlflow
+
+    container_name: telecom-mlflow
+
+    ports:
+      - "127.0.0.1:5000:5000"
+
+    volumes:
+      - ./docker_storage:/mlflow
+
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/health', timeout=5)"
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+    networks:
+      - telecom-network
+
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+
+    container_name: telecom-api
+
+    ports:
+      - "127.0.0.1:8000:8000"
+
+    environment:
+      API_HOST: "0.0.0.0"
+      API_PORT: "8000"
+
+      MLFLOW_TRACKING_URI: "http://mlflow:5000"
+      MLFLOW_REGISTRY_URI: "http://mlflow:5000"
+
+      REGISTERED_MODEL_NAME: "telecom-churn-classifier"
+      MODEL_ALIAS: "champion"
+
+      CLASSIFICATION_THRESHOLD: "0.5"
+      MAX_BATCH_SIZE: "1000"
+      LOG_LEVEL: "INFO"
+
+    depends_on:
+      mlflow:
+        condition: service_healthy
+
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/ready', timeout=5)"
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+    networks:
+      - telecom-network
+
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+
+    container_name: telecom-frontend
+
+    ports:
+      - "127.0.0.1:8501:8501"
+
+    environment:
+      TELECOM_API_URL: "http://api:8000"
+      TELECOM_API_TIMEOUT: "60"
+      TELECOM_HEALTH_TIMEOUT: "5"
+
+    volumes:
+      - ./data/raw:/app/data/raw:ro
+
+    depends_on:
+      api:
+        condition: service_healthy
+
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8501/_stcore/health', timeout=5)"
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+    networks:
+      - telecom-network
+
+    restart: unless-stopped
+
+networks:
+
+  telecom-network:
+    driver: bridge

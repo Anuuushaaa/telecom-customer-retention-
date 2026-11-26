@@ -1,0 +1,59 @@
+# Git
+.git
+.github
+
+# Virtual environments
+.venv
+venv
+env
+*.venv
+
+# Python caches
+**/__pycache__
+**/*.pyc
+**/*.pyo
+.pytest_cache
+
+# IDE
+.vscode
+.idea
+
+# Dataset
+data/raw
+data/processed
+
+# Model artifacts
+models
+mlflow_store
+mlruns
+mlartifacts
+
+# Local databases
+**/*.db
+**/*.db-journal
+**/*.db-wal
+**/*.db-shm
+
+# Notebooks
+notebooks
+**/.ipynb_checkpoints
+
+# Tests
+tests
+
+# Secrets
+.env
+.env.*
+.streamlit/secrets.toml
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.log
+*.zip
+*.tmp
+# Docker deployment storage
+docker_storage/
+.docker_storage_staging/
