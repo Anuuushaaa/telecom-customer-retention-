@@ -1,0 +1,28 @@
+{
+    "generated_at_utc": "2026-11-25T19:59:42.763146+00:00",
+    "dataset_hash": "88be4b93fbe0cc83421af1c503794c97c342eca914c1576db7c276e61d61358a",
+    "validation_predictions_hash": "ada006e7e6e78a267a769f0f9ee01326aad5651073e875fb460071bc7ad731c3",
+    "dataset_partition": "validation",
+    "validation_customers": 1409,
+    "feature_count": 29,
+    "registered_model_name": "telecom-churn-classifier",
+    "model_alias": "champion",
+    "model_name": "xgboost",
+    "model_version": "2",
+    "run_id": "1121b4c5e9ec41c2a3fd5d9f7c8d2ff1",
+    "calibration_method": "sigmoid",
+    "explanation_method": "TreeSHAP",
+    "feature_perturbation": "tree_path_dependent",
+    "output_space": "raw_log_odds",
+    "aggregation_method": "customer_count_weighted_mean",
+    "batch_count": 2,
+    "batch_sizes": [
+        1000,
+        409
+    ],
+    "max_additivity_error": 1.3881362974643707e-06,
+    "additivity_verified_by_api": true,
+    "test_partition_explained": false,
+    "importance_report_hash": "eb8ce1a2d9f7b617459369cb4d881a0ff937801cbb6b80e41357fd61a9521048",
+    "interpretation": "SHAP explains model behavior, not causal effects or direct changes in calibrated probability."
+}
